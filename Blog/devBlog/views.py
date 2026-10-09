@@ -1,17 +1,20 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
 from .models import Post, Tag, UserProfile, Follow
-from .forms import RegisterForm
+from .forms import RegisterForm, PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from .forms import RegisterForm, PostForm, CommentForm
 
 
-@login_required
 def home(request):
     query = request.GET.get('q', '').strip()
     tags = Tag.objects.all()
+
+    # Trang landing chào mừng có video khi mới vào web
+    if not request.user.is_authenticated and not query and not request.GET.get('feed'):
+        return render(request, 'devBlog/landing.html')
 
     if query:
         posts = Post.objects.filter(
@@ -89,9 +92,8 @@ def register(request):
             if interests:
                 profile.interests.set(interests)
 
-            request.session['welcome_new_user'] = True
             request.session['registered_username'] = user.username
-
+            messages.success(request, 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.')
             return redirect('login')
 
     else:
@@ -106,7 +108,6 @@ def register(request):
 
 
 def login_view(request):
-    show_welcome = request.session.pop('welcome_new_user', False)
     registered_username = request.session.pop('registered_username', '')
 
     if request.method == 'POST':
@@ -124,11 +125,11 @@ def login_view(request):
             return redirect('home')
 
         return render(request, 'devBlog/login.html', {
-            'error': 'Sai tên đăng nhập hoặc mật khẩu.'
+            'error': 'Sai tên đăng nhập hoặc mật khẩu.',
+            'registered_username': username,
         })
 
     return render(request, 'devBlog/login.html', {
-        'show_welcome': show_welcome,
         'registered_username': registered_username,
     })
 

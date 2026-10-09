@@ -1,0 +1,33 @@
+{% extends 'devBlog/base.html' %}
+{% load static %}
+
+{% block title %}Chào mừng đến với Perspect{% endblock %}
+{% block body_class %}landing-page-active{% endblock %}
+
+{% block content %}
+<section class="fullscreen-landing">
+  <!-- Video nền (chạy trực tiếp từ static nội bộ, tối ưu 0ms độ trễ) -->
+  <video
+    class="fullscreen-landing-video"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="auto"
+  >
+    <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
+    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260711_090308_1dd0cea7-f9ba-4db4-8147-c7d746061c9e.mp4" type="video/mp4">
+  </video>
+  <div class="fullscreen-landing-overlay"></div>
+
+  <!-- Nội dung trung tâm -->
+  <div class="fullscreen-landing-center">
+    <h1 class="fullscreen-landing-title">Chào mừng bạn đến với Perspect</h1>
+    <p class="fullscreen-landing-subtitle">nơi chia sẻ góc nhìn cuộc sống</p>
+    <a href="{% url 'login' %}" class="fullscreen-landing-btn">
+      <span>Khám phá ngay</span>
+      <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+</section>
+{% endblock %}

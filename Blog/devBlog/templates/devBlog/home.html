@@ -3,20 +3,24 @@
 {% block title %}{% if current_tag %}{{ current_tag.name }} - {% endif %}Trang chủ - Perspect{% endblock %}
 
 {% block content %}
+<div id="posts-feed-anchor"></div>
 <div class="feed-layout">
   <section class="posts-feed">
     {% if query %}
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem;">
         <h1 style="font-size:1.45rem; margin:0;"><i class="fa-solid fa-magnifying-glass"></i> Kết quả cho: "{{ query }}" ({{ posts.count }})</h1>
-        <a href="{% url 'home' %}" class="btn" style="font-size:.85rem;padding:.4rem .85rem;"><i class="fa-solid fa-arrow-left"></i> Xem tất cả bài viết</a>
+        <a href="{% url 'home' %}" class="btn-drift-pill btn-drift-pill-muted" style="padding:0.35rem 1rem; font-size:.85rem;"><i class="fa-solid fa-arrow-left"></i> Xem tất cả bài viết</a>
       </div>
     {% elif current_tag %}
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem;">
         <h1 style="font-size:1.45rem; margin:0;"><i class="fa-solid fa-hashtag"></i> Thẻ: {{ current_tag.name }} ({{ posts.count }})</h1>
-        <a href="{% url 'home' %}" class="btn" style="font-size:.85rem;padding:.4rem .85rem;"><i class="fa-solid fa-arrow-left"></i> Tất cả bài viết</a>
+        <a href="{% url 'home' %}" class="btn-drift-pill btn-drift-pill-muted" style="padding:0.35rem 1rem; font-size:.85rem;"><i class="fa-solid fa-arrow-left"></i> Tất cả bài viết</a>
       </div>
     {% else %}
-      <h1 style="text-align: center; margin-bottom: 1.5rem; font-size: 1.85rem;">Bài viết mới nhất</h1>
+      <div class="feed-intro-header">
+        <div class="feed-intro-badge">BÀI VIẾT MỚI NHẤT</div>
+        <h2 class="feed-intro-title">Dòng suy ngẫm được chia sẻ hôm nay</h2>
+      </div>
     {% endif %}
     {% for post in posts %}
     <article class="card post-card">

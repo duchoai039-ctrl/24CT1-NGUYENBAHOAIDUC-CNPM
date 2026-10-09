@@ -1,7 +1,12 @@
 {% load static %}
 <header class="navbar">
   <div class="navbar-left">
-    <a href="/" class="logo logo-badge" title="Perspect - Góc nhìn cuộc sống">Per</a>
+    <a href="/" class="logo logo-badge" title="Perspect - Góc nhìn cuộc sống">
+      <svg class="drift-logo-mark" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 256 256" fill="currentColor" style="vertical-align:middle;margin-right:6px;">
+        <path d="M 256 256 L 178 256 C 150.386 256 128 233.614 128 206 L 128 256 L 0 256 L 0 192 C 0 156.654 28.654 128 64 128 C 99.346 128 128 156.654 128 192 L 128 128 L 256 128 Z M 78 0 C 105.614 0 128 22.386 128 50 L 128 0 L 256 0 L 256 64 C 256 99.346 227.346 128 192 128 C 156.654 128 128 99.346 128 64 L 128 128 L 0 128 L 0 0 Z" />
+      </svg>
+      <span>Per</span>
+    </a>
     {% if user.is_authenticated %}
       <nav class="nav-links">
         <a href="{% url 'home' %}"><i class="fa-solid fa-house"></i> Trang chủ</a>
@@ -52,6 +57,9 @@
           <a href="{% url 'profile' %}" class="dropdown-item">
             <i class="fa-solid fa-user"></i> Trang cá nhân
           </a>
+          <a href="{% url 'create_post' %}" class="dropdown-item">
+            <i class="fa-solid fa-pen-to-square"></i> Viết bài mới
+          </a>
           <a href="{% url 'logout' %}" class="dropdown-item logout-item">
             <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
           </a>
@@ -59,8 +67,13 @@
       </div>
     {% else %}
       <nav class="nav-links">
-        <a href="{% url 'login' %}">Đăng nhập</a>
-        <a href="{% url 'register' %}">Đăng ký</a>
+        <a href="{% url 'login' %}" class="nav-login-link">Đăng nhập</a>
+        <a href="{% url 'register' %}" class="btn-drift-nav-cta">
+          <span class="btn-drift-icon-circle-sm">
+            <i class="fa-solid fa-plus"></i>
+          </span>
+          <span>Đăng ký</span>
+        </a>
       </nav>
     {% endif %}
   </div>
