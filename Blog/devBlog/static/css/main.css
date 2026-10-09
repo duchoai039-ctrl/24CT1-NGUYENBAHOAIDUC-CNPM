@@ -2004,6 +2004,14 @@ hr {
 body.landing-page-active {
   overflow: hidden !important;
   height: 100vh !important;
+  /* Video đã phủ kín màn hình: tắt nền chuyển động bên dưới,
+     vì nó bắt trình duyệt vẽ lại cả trang mỗi khung hình làm video bị giật */
+  animation: none;
+}
+
+body.landing-page-active::before,
+body.landing-page-active::after {
+  display: none;
 }
 
 body.landing-page-active .container {
@@ -2023,14 +2031,16 @@ body.landing-page-active .navbar {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(28, 18, 10, 0.45);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  /* Không làm mờ nền (backdrop-filter) đè lên video: phải tính lại mỗi khung hình.
+     Nền đậm hơn một chút để chữ vẫn dễ đọc. */
+  background: rgba(28, 18, 10, 0.7);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 [data-theme="light"] body.landing-page-active .navbar {
-  background: rgba(255, 249, 242, 0.7);
+  background: rgba(255, 249, 242, 0.88);
   border-bottom: 1px solid rgba(217, 196, 170, 0.35);
 }
 

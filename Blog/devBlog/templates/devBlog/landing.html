@@ -6,17 +6,16 @@
 
 {% block content %}
 <section class="fullscreen-landing">
-  <!-- Video nền (chạy trực tiếp từ static nội bộ, tối ưu 0ms độ trễ) -->
+  <!-- Video nền 720p (~1 MB, faststart: phát được khi mới tải một phần); poster hiện ngay trong lúc chờ -->
   <video
     class="fullscreen-landing-video"
     autoplay
     muted
     loop
     playsinline
-    preload="auto"
+    poster="{% static 'videos/hero-poster.jpg' %}"
   >
     <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
-    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260711_090308_1dd0cea7-f9ba-4db4-8147-c7d746061c9e.mp4" type="video/mp4">
   </video>
   <div class="fullscreen-landing-overlay"></div>
 
