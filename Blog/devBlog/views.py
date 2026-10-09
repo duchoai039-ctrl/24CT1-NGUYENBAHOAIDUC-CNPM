@@ -187,10 +187,15 @@ def edit_post(request, post_id):
         return redirect('post_detail', post_id=post.id)
 
     if request.method == 'POST':
+        # Ghi lại tên ảnh cũ trước is_valid(), vì is_valid() gán ảnh mới vào post
+        old_image = post.image.name
         form = PostForm(request.POST, request.FILES, instance=post)
 
         if form.is_valid():
             form.save()
+            # Đã đổi ảnh -> xóa file ảnh cũ khỏi ổ đĩa (lưu DB xong mới xóa file)
+            if old_image and old_image != post.image.name:
+                post.image.storage.delete(old_image)
             return redirect('post_detail', post_id=post.id)
 
     else:
@@ -210,7 +215,11 @@ def delete_post(request, post_id):
         return redirect('post_detail', post_id=post.id)
 
     if request.method == 'POST':
+        image = post.image
         post.delete()
+        # Xóa bài xong mới xóa file ảnh, để lỡ xóa file lỗi thì DB vẫn đúng
+        if image:
+            image.delete(save=False)
         return redirect('home')
 
     return render(request, 'devBlog/delete_post.html', {
