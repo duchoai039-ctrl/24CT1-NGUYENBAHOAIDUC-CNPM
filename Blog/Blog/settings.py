@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,13 +22,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-23zsldztjtt6=_^izmw^)!pzr#i_2l%z#vtq+j*@*ge6=(yhtr'
+# Khóa bí mật lấy từ biến môi trường, có fallback an toàn cho môi trường dev cục bộ
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-23zsldztjtt6=_^izmw^)!pzr#i_2l%z#vtq+j*@*ge6=(yhtr'
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Bật debug cho dev cục bộ (có thể tắt bằng DJANGO_DEBUG=0)
+DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = ['*']
+# Chỉ nhận máy mình và các tên miền tunnel đang dùng (dấu chấm đầu = mọi subdomain)
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.pinggy.link',
+    '.localhost.run',
+    '.ngrok-free.app',
+    '.loca.lt',
+]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.pinggy.link',
@@ -113,7 +127,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'vi'
 
 TIME_ZONE = 'UTC'
 

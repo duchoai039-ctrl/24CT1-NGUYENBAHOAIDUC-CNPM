@@ -28,9 +28,9 @@
     <div class="form-group">
       <label for="password">Mật khẩu:</label>
       <input type="password" name="password" id="password" required />
-      {% if form.password.errors %}
-        <small style="color:#ff6b6b;">{{ form.password.errors.0 }}</small>
-      {% endif %}
+      {% for error in form.password.errors %}
+        <small style="color:#ff6b6b; display:block;">{{ error }}</small>
+      {% endfor %}
     </div>
     {% if tags %}
     <div class="form-group">

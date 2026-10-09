@@ -5,6 +5,8 @@ from django.contrib import messages
 from .models import Post, Tag, UserProfile, Follow
 from .forms import RegisterForm, PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.db.models import Q
 
 
@@ -65,6 +67,7 @@ def post_detail(request, post_id):
 
 
 @login_required
+@require_POST
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if request.user in post.likes.all():
@@ -72,8 +75,11 @@ def like_post(request, post_id):
     else:
         post.likes.add(request.user)
 
+    # Chỉ quay lại trang trước nếu trang đó thuộc web mình (chặn open redirect)
     next_url = request.META.get('HTTP_REFERER')
-    if next_url:
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
         return redirect(next_url)
     return redirect('post_detail', post_id=post.id)
 
@@ -134,6 +140,7 @@ def login_view(request):
     })
 
 
+@require_POST
 def logout_view(request):
     logout(request)
     return redirect('login')
@@ -233,6 +240,7 @@ def user_profile(request, username):
 
 
 @login_required
+@require_POST
 def toggle_follow(request, username):
     target_user = get_object_or_404(User, username=username)
 
