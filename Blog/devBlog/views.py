@@ -1,16 +1,23 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Post, Tag, UserProfile, Follow
+from .models import Post, Tag, UserProfile, Follow, first_sentence
 from .forms import RegisterForm, PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, Exists, OuterRef
+from django.db.models import Q, Count, Exists, OuterRef, Max, F
+from django.utils import timezone
+from django.utils.text import Truncator
+from datetime import timedelta
 
 POSTS_PER_PAGE = 10
+QUOTE_MIN_CHARS = 20
+QUOTE_MAX_CHARS = 120
 
 
 def posts_with_stats(posts, user):
@@ -23,20 +30,77 @@ def posts_with_stats(posts, user):
     )
 
 
+FOLLOWING_SIDEBAR_LIMIT = 8
+
+
+def following_sidebar(user):
+    # Cột "Đang theo dõi": người đăng bài gần nhất lên đầu, người chưa có bài xuống cuối.
+    # Chưa theo dõi ai -> gợi ý vài người viết nhiều nhất mà mình chưa theo dõi.
+    following = (User.objects.filter(followers__follower=user)
+                 .annotate(last_post_at=Max('post__created_at'))
+                 .order_by(F('last_post_at').desc(nulls_last=True), 'username'))
+    total = following.count()
+    shown = list(following[:FOLLOWING_SIDEBAR_LIMIT])
+    recent = timezone.now() - timedelta(hours=24)
+    for u in shown:
+        u.posted_recently = bool(u.last_post_at and u.last_post_at >= recent)
+
+    suggestions = []
+    if not total:
+        suggestions = (User.objects.exclude(id=user.id)
+                       .annotate(n_posts=Count('post'))
+                       .filter(n_posts__gt=0)
+                       .order_by('-n_posts', 'username')[:3])
+    return {
+        'following_users': shown,
+        'following_more': total - len(shown),
+        'follow_suggestions': suggestions,
+    }
+
+
 def render_feed(request, posts, extra):
     page = Paginator(posts_with_stats(posts, request.user), POSTS_PER_PAGE).get_page(request.GET.get('page'))
     return render(request, 'devBlog/home.html', {
         'posts': page,
         'latest_posts': Post.objects.order_by('-created_at')[:5],
         'tags': Tag.objects.all(),
+        **following_sidebar(request.user),
         **extra,
     })
+
+
+def featured_quote(posts=None):
+    # Câu đầu (tối đa 120 ký tự) của bài được thích nhiều nhất, hòa thì lấy bài mới hơn.
+    # Bỏ qua câu quá ngắn (vd "hehe") vì không ra "góc nhìn"; chỉ xét 20 bài đứng đầu.
+    # Landing: xét mọi bài (ngoại lệ có chủ đích của luật "chỉ thành viên xem bài").
+    # Trang cá nhân: truyền vào bài của một người.
+    if posts is None:
+        posts = Post.objects.all()
+    top = (posts.select_related('author')
+           .annotate(n_likes=Count('likes'))
+           .order_by('-n_likes', '-created_at')[:20])
+    for post in top:
+        sentence = first_sentence(post.content)
+        if len(sentence) >= QUOTE_MIN_CHARS:
+            return {
+                'text': Truncator(sentence).chars(QUOTE_MAX_CHARS),
+                'author': post.author.username,
+                'post_id': post.id,
+                'created_at': post.created_at,
+                'likes': post.n_likes,
+            }
+    return None
 
 
 def home(request):
     # Chưa đăng nhập thì luôn thấy trang landing (bài viết chỉ dành cho thành viên)
     if not request.user.is_authenticated:
-        return render(request, 'devBlog/landing.html')
+        return render(request, 'devBlog/landing.html', {
+            'post_count': Post.objects.count(),
+            'member_count': User.objects.count(),
+            'tag_count': Tag.objects.count(),
+            'quote': featured_quote(),
+        })
 
     query = request.GET.get('q', '').strip()
 
@@ -57,7 +121,7 @@ def home(request):
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
 
-    comments = post.comments.all().order_by('-created_at')
+    comments = post.comments.select_related('author').order_by('-created_at')
 
     if request.method == 'POST':
         form = CommentForm(request.POST)
@@ -68,7 +132,7 @@ def post_detail(request, post_id):
             comment.author = request.user
             comment.save()
 
-            return redirect('post_detail', post_id=post.id)
+            return redirect(reverse('post_detail', args=[post.id]) + '#binh-luan')
 
     else:
         form = CommentForm()
@@ -76,7 +140,9 @@ def post_detail(request, post_id):
     return render(request, 'devBlog/post_detail.html', {
         'post': post,
         'comments': comments,
-        'form': form
+        'form': form,
+        'is_liked': post.likes.filter(id=request.user.id).exists(),
+        'like_count': post.likes.count(),
     })
 
 
@@ -84,10 +150,15 @@ def post_detail(request, post_id):
 @require_POST
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    if post.likes.filter(id=request.user.id).exists():
-        post.likes.remove(request.user)
-    else:
+    liked = not post.likes.filter(id=request.user.id).exists()
+    if liked:
         post.likes.add(request.user)
+    else:
+        post.likes.remove(request.user)
+
+    # Gọi từ JavaScript (nút thích không tải lại trang): trả trạng thái mới
+    if request.headers.get('X-Requested-With') == 'fetch':
+        return JsonResponse({'liked': liked, 'count': post.likes.count()})
 
     # Chỉ quay lại trang trước nếu trang đó thuộc web mình (chặn open redirect)
     next_url = request.META.get('HTTP_REFERER')
@@ -260,6 +331,7 @@ def user_profile(request, username):
         'user_profile': user_profile_obj,
         'is_own_profile': is_own_profile,
         'is_following': is_following,
+        'top_quote': featured_quote(Post.objects.filter(author=profile_user)),
     })
 
 
@@ -267,8 +339,11 @@ def user_profile(request, username):
 @require_POST
 def toggle_follow(request, username):
     target_user = get_object_or_404(User, username=username)
+    is_fetch = request.headers.get('X-Requested-With') == 'fetch'
 
     if target_user == request.user:
+        if is_fetch:
+            return JsonResponse({'error': 'Không thể tự theo dõi chính mình.'}, status=400)
         return redirect('user_profile', username=username)
 
     # Xóa trước; không có gì để xóa nghĩa là chưa theo dõi -> tạo mới.
@@ -278,6 +353,13 @@ def toggle_follow(request, username):
     ).delete()
     if not deleted:
         Follow.objects.get_or_create(follower=request.user, following=target_user)
+
+    # Gọi từ JavaScript (nút theo dõi không tải lại trang): trả trạng thái mới
+    if is_fetch:
+        return JsonResponse({
+            'following': not deleted,
+            'followers': Follow.objects.filter(following=target_user).count(),
+        })
 
     return redirect('user_profile', username=username)
 
