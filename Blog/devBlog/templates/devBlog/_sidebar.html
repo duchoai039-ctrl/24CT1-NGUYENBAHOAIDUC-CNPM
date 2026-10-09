@@ -2,7 +2,7 @@
 <section class="widget">
   <h3>Mới nhất</h3>
   <ul>
-    {% for p in posts|slice:":5" %}
+    {% for p in latest_posts %}
       <li><a href="{% url 'post_detail' p.id %}">{{ p.title|truncatechars:30 }}</a></li>
     {% empty %}
       <li>Chưa có bài viết.</li>

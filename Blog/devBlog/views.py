@@ -7,16 +7,38 @@ from .forms import RegisterForm, PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Q
+from django.core.paginator import Paginator
+from django.db.models import Q, Count, Exists, OuterRef
+
+POSTS_PER_PAGE = 10
+
+
+def posts_with_stats(posts, user):
+    # Lấy sẵn tác giả, thẻ, số thích, số bình luận và "mình đã thích chưa"
+    # trong vài truy vấn cố định, thay vì template hỏi DB riêng cho từng bài.
+    return posts.select_related('author').prefetch_related('tags').annotate(
+        n_likes=Count('likes', distinct=True),
+        n_comments=Count('comments', distinct=True),
+        is_liked=Exists(Post.likes.through.objects.filter(post=OuterRef('pk'), user_id=user.id)),
+    )
+
+
+def render_feed(request, posts, extra):
+    page = Paginator(posts_with_stats(posts, request.user), POSTS_PER_PAGE).get_page(request.GET.get('page'))
+    return render(request, 'devBlog/home.html', {
+        'posts': page,
+        'latest_posts': Post.objects.order_by('-created_at')[:5],
+        'tags': Tag.objects.all(),
+        **extra,
+    })
 
 
 def home(request):
-    query = request.GET.get('q', '').strip()
-    tags = Tag.objects.all()
-
-    # Trang landing chào mừng có video khi mới vào web
-    if not request.user.is_authenticated and not query and not request.GET.get('feed'):
+    # Chưa đăng nhập thì luôn thấy trang landing (bài viết chỉ dành cho thành viên)
+    if not request.user.is_authenticated:
         return render(request, 'devBlog/landing.html')
+
+    query = request.GET.get('q', '').strip()
 
     if query:
         posts = Post.objects.filter(
@@ -28,11 +50,7 @@ def home(request):
     else:
         posts = Post.objects.all().order_by('-created_at')
 
-    return render(request, 'devBlog/home.html', {
-        'posts': posts,
-        'tags': tags,
-        'query': query
-    })
+    return render_feed(request, posts, {'query': query})
 
 
 @login_required
@@ -70,7 +88,7 @@ def post_detail(request, post_id):
 @require_POST
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    if request.user in post.likes.all():
+    if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
     else:
         post.likes.add(request.user)
@@ -211,11 +229,12 @@ def profile(request):
 @login_required
 def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
-    posts = Post.objects.filter(
-        author=profile_user
-    ).order_by('-created_at')
+    posts = posts_with_stats(
+        Post.objects.filter(author=profile_user).order_by('-created_at'),
+        request.user,
+    )
 
-    total_likes_received = sum(post.total_likes() for post in posts)
+    total_likes_received = Post.likes.through.objects.filter(post__author=profile_user).count()
     follower_count = Follow.objects.filter(following=profile_user).count()
     following_count = Follow.objects.filter(follower=profile_user).count()
     user_profile_obj, _ = UserProfile.objects.get_or_create(user=profile_user)
@@ -247,22 +266,23 @@ def toggle_follow(request, username):
     if target_user == request.user:
         return redirect('user_profile', username=username)
 
-    follow_obj = Follow.objects.filter(
+    # Xóa trước; không có gì để xóa nghĩa là chưa theo dõi -> tạo mới.
+    # get_or_create tự xử lý khi hai lần bấm cùng tạo (không văng IntegrityError).
+    deleted, _ = Follow.objects.filter(
         follower=request.user, following=target_user
-    )
-    if follow_obj.exists():
-        follow_obj.delete()
-    else:
-        Follow.objects.create(follower=request.user, following=target_user)
+    ).delete()
+    if not deleted:
+        Follow.objects.get_or_create(follower=request.user, following=target_user)
 
     return redirect('user_profile', username=username)
 
 
 @login_required
 def my_posts(request):
-    posts = Post.objects.filter(
-        author=request.user
-    ).order_by('-created_at')
+    posts = posts_with_stats(
+        Post.objects.filter(author=request.user).order_by('-created_at'),
+        request.user,
+    )
 
     return render(request, 'devBlog/my_posts.html', {
         'posts': posts
@@ -273,10 +293,5 @@ def my_posts(request):
 def posts_by_tag(request, tag_id):
     tag = get_object_or_404(Tag, id=tag_id)
     posts = Post.objects.filter(tags=tag).order_by('-created_at')
-    tags = Tag.objects.all()
 
-    return render(request, 'devBlog/home.html', {
-        'posts': posts,
-        'tags': tags,
-        'current_tag': tag
-    })
+    return render_feed(request, posts, {'current_tag': tag})

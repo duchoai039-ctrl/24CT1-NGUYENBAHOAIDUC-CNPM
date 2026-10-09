@@ -8,12 +8,12 @@
   <section class="posts-feed">
     {% if query %}
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem;">
-        <h1 style="font-size:1.45rem; margin:0;"><i class="fa-solid fa-magnifying-glass"></i> Kết quả cho: "{{ query }}" ({{ posts.count }})</h1>
+        <h1 style="font-size:1.45rem; margin:0;"><i class="fa-solid fa-magnifying-glass"></i> Kết quả cho: "{{ query }}" ({{ posts.paginator.count }})</h1>
         <a href="{% url 'home' %}" class="btn-drift-pill btn-drift-pill-muted" style="padding:0.35rem 1rem; font-size:.85rem;"><i class="fa-solid fa-arrow-left"></i> Xem tất cả bài viết</a>
       </div>
     {% elif current_tag %}
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem;">
-        <h1 style="font-size:1.45rem; margin:0;"><i class="fa-solid fa-hashtag"></i> Thẻ: {{ current_tag.name }} ({{ posts.count }})</h1>
+        <h1 style="font-size:1.45rem; margin:0;"><i class="fa-solid fa-hashtag"></i> Thẻ: {{ current_tag.name }} ({{ posts.paginator.count }})</h1>
         <a href="{% url 'home' %}" class="btn-drift-pill btn-drift-pill-muted" style="padding:0.35rem 1rem; font-size:.85rem;"><i class="fa-solid fa-arrow-left"></i> Tất cả bài viết</a>
       </div>
     {% else %}
@@ -40,20 +40,32 @@
       <div class="post-stats">
         <form method="POST" action="{% url 'like_post' post.id %}" class="inline-form">
           {% csrf_token %}
-          <button type="submit" class="stat-btn {% if request.user in post.likes.all %}liked{% endif %}" title="Thích">
+          <button type="submit" class="stat-btn {% if post.is_liked %}liked{% endif %}" title="Thích">
             <svg class="stat-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-            <span>{{ post.total_likes }}</span>
+            <span>{{ post.n_likes }}</span>
           </button>
         </form>
         <span class="stat-item" title="Bình luận">
           <svg class="stat-icon" viewBox="0 0 24 24"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
-          <span>{{ post.total_comments }}</span>
+          <span>{{ post.n_comments }}</span>
         </span>
       </div>
     </article>
     {% empty %}
     <p style="text-align: center; color: rgba(255,255,255,0.6);">Chưa có bài viết nào.</p>
     {% endfor %}
+
+    {% if posts.has_other_pages %}
+    <nav class="pagination">
+      {% if posts.has_previous %}
+        <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}page={{ posts.previous_page_number }}" class="btn-drift-pill btn-drift-pill-muted"><i class="fa-solid fa-arrow-left"></i> Trang trước</a>
+      {% endif %}
+      <span>Trang {{ posts.number }} / {{ posts.paginator.num_pages }}</span>
+      {% if posts.has_next %}
+        <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}page={{ posts.next_page_number }}" class="btn-drift-pill btn-drift-pill-muted">Trang sau <i class="fa-solid fa-arrow-right"></i></a>
+      {% endif %}
+    </nav>
+    {% endif %}
   </section>
 
   <!-- Sliding Drawer Sidebar on Hover -->
