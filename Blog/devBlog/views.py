@@ -60,10 +60,6 @@ def post_detail(request, post_id):
     comments = post.comments.all().order_by('-created_at')
 
     if request.method == 'POST':
-
-        if not request.user.is_authenticated:
-            return redirect('login')
-
         form = CommentForm(request.POST)
 
         if form.is_valid():
