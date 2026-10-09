@@ -2,3 +2,8 @@ venv/
 __pycache__/
 *.pyc
 *.sqlite3
+
+# Ảnh người dùng upload (dữ liệu, không phải code)
+Blog/media/
+# File static gom lại khi chạy collectstatic
+Blog/staticfiles/
