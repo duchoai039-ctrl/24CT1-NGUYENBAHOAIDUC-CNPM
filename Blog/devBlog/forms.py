@@ -47,7 +47,7 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ['title', 'content', 'image', 'tags']
+        fields = ['content', 'image', 'tags']  # tiêu đề tự lấy từ nội dung (xem Post.save)
 
 
 class CommentForm(forms.ModelForm):
