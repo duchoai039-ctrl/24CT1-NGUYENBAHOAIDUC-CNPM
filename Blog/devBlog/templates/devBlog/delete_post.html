@@ -1,15 +1,15 @@
 {% extends 'devBlog/base.html' %}
 
-{% block title %}Xóa bài viết - Perspect{% endblock %}
+{% block title %}Xóa bài - Perspect{% endblock %}
 
 {% block content %}
-<div class="card">
-  <h1 class="mb-3"><i class="fa-solid fa-trash-can"></i> Xóa bài viết</h1>
-  <p>Bạn có chắc muốn xóa bài: <strong>{{ post.title }}</strong>?</p>
-  <form method="POST" class="form-group">
+<div class="page-narrow">
+  <h1 class="page-title">Xóa bài này?</h1>
+  <p class="lead">Bài “{{ post.opening|truncatechars:80 }}” sẽ bị xóa cùng toàn bộ bình luận và ảnh. Không thể khôi phục.</p>
+  <form method="POST" class="form-actions">
     {% csrf_token %}
-    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-check"></i> Xác nhận xóa</button>
-    <a href="{% url 'post_detail' post.id %}" class="btn"><i class="fa-solid fa-xmark"></i> Hủy</a>
+    <button type="submit" class="btn btn-danger">Xóa bài</button>
+    <a href="{% url 'post_detail' post.id %}" class="btn btn-secondary">Giữ lại</a>
   </form>
 </div>
 {% endblock %}

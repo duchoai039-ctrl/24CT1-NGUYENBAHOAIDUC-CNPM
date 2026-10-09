@@ -1,22 +1,68 @@
-<!-- Latest Posts -->
-<section class="widget">
-  <h3>Mới nhất</h3>
-  <ul>
-    {% for p in latest_posts %}
-      <li><a href="{% url 'post_detail' p.id %}">{{ p.title|truncatechars:30 }}</a></li>
-    {% empty %}
-      <li>Chưa có bài viết.</li>
+{% load perspect %}
+<section class="aside-section" aria-labelledby="following-heading">
+  <h2 id="following-heading">Đang theo dõi</h2>
+  {% if following_users %}
+    <ul class="following-list">
+      {% for u in following_users %}
+        <li>
+          <a href="{% url 'user_profile' u.username %}" class="following-person">
+            <span class="following-avatar" aria-hidden="true">{{ u.username|first|upper }}</span>
+            <span class="following-text">
+              <span class="following-name">
+                {{ u.username }}
+                {% if u.posted_recently %}<span class="new-dot" title="Có bài mới trong 24 giờ qua"></span><span class="visually-hidden"> (có bài mới)</span>{% endif %}
+              </span>
+              <span class="following-meta">
+                {% if u.last_post_at %}{{ u.last_post_at|dang_luc }}{% else %}Chưa có bài viết{% endif %}
+              </span>
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if following_more %}
+      <p class="aside-more">và {{ following_more }} người khác</p>
+    {% endif %}
+  {% else %}
+    <p class="aside-empty">Bạn chưa theo dõi ai. Theo dõi một người để thấy họ ở đây.</p>
+    {% if follow_suggestions %}
+      <ul class="following-list">
+        {% for u in follow_suggestions %}
+          <li>
+            <a href="{% url 'user_profile' u.username %}" class="following-person">
+              <span class="following-avatar" aria-hidden="true">{{ u.username|first|upper }}</span>
+              <span class="following-text">
+                <span class="following-name">{{ u.username }}</span>
+                <span class="following-meta">{{ u.n_posts }} bài viết</span>
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endif %}
+</section>
+
+{% if tags %}
+<section class="aside-section">
+  <h2>Chủ đề</h2>
+  <ul class="aside-tags">
+    {% for tag in tags %}
+      <li><a href="{% url 'posts_by_tag' tag.id %}"{% if current_tag.id == tag.id %} aria-current="page"{% endif %}>{{ tag.name }}</a></li>
     {% endfor %}
   </ul>
 </section>
+{% endif %}
 
-<!-- Tags -->
-{% if tags %}
-<section class="widget">
-  <h3>Thẻ nội dung</h3>
-  <ul class="tag-list">
-    {% for tag in tags %}
-      <li><a href="{% url 'posts_by_tag' tag.id %}" class="tag-pill">{{ tag.name }}</a></li>
+{% comment %} Trang chủ thường đã là danh sách bài mới nhất; chỉ cần "Mới đăng" khi đang lọc {% endcomment %}
+{% if query or current_tag %}
+<section class="aside-section">
+  <h2>Mới đăng</h2>
+  <ul class="aside-latest">
+    {% for p in latest_posts %}
+      <li><a href="{% url 'post_detail' p.id %}">{{ p.opening|truncatechars:70 }}</a></li>
+    {% empty %}
+      <li>Chưa có bài viết.</li>
     {% endfor %}
   </ul>
 </section>

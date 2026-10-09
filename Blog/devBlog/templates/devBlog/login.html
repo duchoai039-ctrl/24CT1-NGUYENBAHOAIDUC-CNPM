@@ -1,26 +1,25 @@
 {% extends 'devBlog/base.html' %}
 
 {% block title %}Đăng nhập - Perspect{% endblock %}
-{% block body_class %}auth-page{% endblock %}
 
 {% block content %}
-<div class="auth-card card" style="max-width:450px;margin:auto;">
-  <h1>Đăng nhập</h1>
+<div class="auth">
+  <h1 class="page-title">Đăng nhập</h1>
   {% if error %}
-    <p style="color: red;">{{ error }}</p>
+    <p class="form-error" role="alert">{{ error }}</p>
   {% endif %}
-  <form method="POST" class="form-group">
+  <form method="POST" class="stack-form">
     {% csrf_token %}
-    <div class="form-group">
-      <label for="username">Tên đăng nhập:</label>
-      <input type="text" name="username" id="username" value="{{ registered_username|default:'' }}" required />
+    <div class="field">
+      <label for="username">Tên đăng nhập</label>
+      <input type="text" name="username" id="username" value="{{ registered_username|default:'' }}" autocomplete="username" required />
     </div>
-    <div class="form-group">
-      <label for="password">Mật khẩu:</label>
-      <input type="password" name="password" id="password" required />
+    <div class="field">
+      <label for="password">Mật khẩu</label>
+      <input type="password" name="password" id="password" autocomplete="current-password" required />
     </div>
-    <button type="submit" class="btn"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập</button>
+    <button type="submit" class="btn btn-block">Đăng nhập</button>
   </form>
-  <p>Chưa có tài khoản? <a href="{% url 'register' %}">Đăng ký</a></p>
+  <p class="auth-switch">Chưa có tài khoản? <a href="{% url 'register' %}">Đăng ký</a></p>
 </div>
 {% endblock %}

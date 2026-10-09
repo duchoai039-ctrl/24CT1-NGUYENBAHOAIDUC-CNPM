@@ -1,0 +1,45 @@
+{% comment %}
+  Form đăng/sửa bài, dùng chung cho create_post.html và edit_post.html.
+  Cần: form, submit_label. Tùy chọn: post (khi sửa, để hiện ảnh hiện tại).
+{% endcomment %}
+<form method="POST" enctype="multipart/form-data" class="stack-form">
+  {% csrf_token %}
+
+  <div class="field">
+    <label for="id_content">Bạn muốn chia sẻ điều gì?</label>
+    <p class="field-hint">Bảng tin hiện khoảng 300 ký tự đầu, nên hãy mở bài bằng điều bạn muốn nói nhất.</p>
+    <textarea name="content" id="id_content" rows="12" required autofocus
+              placeholder="Kể lại một khoảnh khắc, một suy nghĩ, một góc nhìn…">{{ form.content.value|default:'' }}</textarea>
+    {% for error in form.content.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  </div>
+
+  <div class="field">
+    <label for="id_image">Ảnh minh họa <span class="optional">(không bắt buộc)</span></label>
+    {% if post.image %}
+      <img src="{{ post.image.url }}" alt="Ảnh hiện tại" class="current-image" />
+      <p class="field-hint">Chọn ảnh mới để thay ảnh này.</p>
+    {% endif %}
+    <input type="file" name="image" id="id_image" accept="image/*" />
+    {% for error in form.image.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  </div>
+
+  {% if form.tags.field.queryset %}
+  <fieldset class="field">
+    <legend>Chủ đề</legend>
+    <div class="choice-chips">
+      {% for tag in form.tags.field.queryset %}
+        <label>
+          <input type="checkbox" name="tags" value="{{ tag.id }}"
+            {% for selected in form.tags.value %}{% if selected|stringformat:"s" == tag.id|stringformat:"s" %}checked{% endif %}{% endfor %} />
+          {{ tag.name }}
+        </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  {% endif %}
+
+  <div class="form-actions">
+    <button type="submit" class="btn">{{ submit_label }}</button>
+    <a href="{% if post %}{% url 'post_detail' post.id %}{% else %}{% url 'home' %}{% endif %}" class="btn btn-secondary">Hủy</a>
+  </div>
+</form>

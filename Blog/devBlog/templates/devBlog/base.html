@@ -5,12 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Perspect - Góc nhìn cuộc sống{% endblock %}</title>
-    {% comment %} Existing CSS link {% endcomment %}
-<link rel="stylesheet" href="{% static 'css/main.css' %}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Literata: tiêu đề + thân bài (serif đọc dài); Be Vietnam Pro: giao diện. Cả hai có đủ dấu tiếng Việt -->
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
 <script>
   (function() {
     const savedTheme = localStorage.getItem('theme');
@@ -23,37 +24,34 @@
 </script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="toast-container">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="toast-notification toast-{{ message.tags|default:'info' }}">
-            <div class="toast-icon">
-              <i class="fa-solid fa-circle-info"></i>
-            </div>
-            <div class="toast-body">
-              <span>{{ message }}</span>
-            </div>
-            <button type="button" class="toast-close" onclick="this.parentElement.remove()">&times;</button>
-          </div>
-        {% endfor %}
-      {% endif %}
+    <a href="#main" class="skip-link">Bỏ qua tới nội dung</a>
+
+    <div id="toast-container" class="toast-container" role="status">
+      {% for message in messages %}
+        <div class="toast-notification toast-{{ message.tags|default:'info' }}">
+          <p class="toast-body">{{ message }}</p>
+          <button type="button" class="toast-close" onclick="this.parentElement.remove()" aria-label="Đóng thông báo">&times;</button>
+        </div>
+      {% endfor %}
     </div>
 
     {% include 'devBlog/_navbar.html' %}
     {% block hero %}{% endblock %}
-    <main class="container fade-in">
+    <main id="main" class="container">
         {% block content %}{% endblock %}
     </main>
     {% include 'devBlog/_footer.html' %}
 
     <script>
       function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', newTheme);
+        const root = document.documentElement;
+        const newTheme = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        // Chỉ bật chuyển màu mượt trong khoảnh khắc đổi chế độ, không làm chậm lúc tải trang
+        root.classList.add('theme-switching');
+        root.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
         updateThemeIcons();
+        setTimeout(() => root.classList.remove('theme-switching'), 400);
       }
 
       function updateThemeIcons() {
@@ -74,6 +72,77 @@
             setTimeout(() => toast.remove(), 400);
           }, 4500);
         });
+      });
+
+      // Chạy lại một hiệu ứng CSS kể cả khi bấm liên tục
+      function replay(el, cls) {
+        el.classList.remove(cls);
+        void el.offsetWidth;
+        el.classList.add(cls);
+      }
+
+      // Các nút bật/tắt gửi ngầm, cập nhật tại chỗ không tải lại trang.
+      // Mỗi mục: cách cập nhật giao diện từ JSON server trả về.
+      const quietForms = {
+        '.like-form': function(form, data) {
+          const btn = form.querySelector('.like-btn');
+          btn.classList.toggle('is-liked', data.liked);
+          btn.setAttribute('aria-pressed', data.liked);
+          btn.title = data.liked ? 'Bỏ thích' : 'Thích';
+          const icon = btn.querySelector('.fa-heart');
+          icon.classList.toggle('fa-solid', data.liked);
+          icon.classList.toggle('fa-regular', !data.liked);
+          btn.querySelector('.like-count').textContent = data.count;
+          const label = btn.querySelector('.like-label');
+          if (label) label.textContent = data.liked ? label.dataset.on : label.dataset.off;
+          if (data.liked) replay(btn, 'pop');
+        },
+        '.follow-form': function(form, data) {
+          const btn = form.querySelector('.follow-btn');
+          btn.classList.toggle('is-following', data.following);
+          btn.setAttribute('aria-pressed', data.following);
+          btn.classList.add('just-toggled');   // chưa hiện "Bỏ theo dõi" khi chuột vẫn nằm trên nút
+          replay(btn, 'settle');
+          const count = document.querySelector('.follower-count');
+          if (count) {
+            count.textContent = data.followers;
+            replay(count, 'bump');
+          }
+        },
+      };
+
+      document.addEventListener('submit', async function(e) {
+        const selector = Object.keys(quietForms).find(s => e.target.matches(s));
+        if (!selector) return;
+        e.preventDefault();
+        const form = e.target;
+        const btn = form.querySelector('button');
+        if (btn.disabled) return;
+        btn.disabled = true;
+        let data;
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'fetch' },
+          });
+          if (!res.ok) throw new Error(res.status);
+          data = await res.json();
+        } catch (err) {
+          // Chỉ khi chính yêu cầu thất bại (mất mạng, hết phiên đăng nhập) mới gửi form như cũ.
+          // Không gửi lại khi server đã nhận, kẻo bị bật/tắt hai lần.
+          form.submit();
+          return;
+        } finally {
+          btn.disabled = false;
+        }
+        quietForms[selector](form, data);
+      });
+
+      // Rời chuột khỏi nút theo dõi thì lần rê sau mới được hiện "Bỏ theo dõi"
+      document.addEventListener('mouseout', function(e) {
+        const btn = e.target.closest && e.target.closest('.follow-btn.just-toggled');
+        if (btn && !btn.contains(e.relatedTarget)) btn.classList.remove('just-toggled');
       });
     </script>
 </body>

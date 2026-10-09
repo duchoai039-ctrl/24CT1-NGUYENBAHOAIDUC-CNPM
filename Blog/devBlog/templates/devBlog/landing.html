@@ -1,32 +1,48 @@
 {% extends 'devBlog/base.html' %}
 {% load static %}
 
-{% block title %}Chào mừng đến với Perspect{% endblock %}
+{% block title %}Perspect, nơi chia sẻ góc nhìn cuộc sống{% endblock %}
 {% block body_class %}landing-page-active{% endblock %}
 
 {% block content %}
-<section class="fullscreen-landing">
+<section class="landing">
   <!-- Video nền 720p (~1 MB, faststart: phát được khi mới tải một phần); poster hiện ngay trong lúc chờ -->
-  <video
-    class="fullscreen-landing-video"
-    autoplay
-    muted
-    loop
-    playsinline
-    poster="{% static 'videos/hero-poster.jpg' %}"
-  >
+  <video class="landing-video" autoplay muted loop playsinline
+         poster="{% static 'videos/hero-poster.jpg' %}" aria-hidden="true">
     <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
   </video>
-  <div class="fullscreen-landing-overlay"></div>
+  <div class="landing-overlay"></div>
 
-  <!-- Nội dung trung tâm -->
-  <div class="fullscreen-landing-center">
-    <h1 class="fullscreen-landing-title">Chào mừng bạn đến với Perspect</h1>
-    <p class="fullscreen-landing-subtitle">nơi chia sẻ góc nhìn cuộc sống</p>
-    <a href="{% url 'login' %}" class="fullscreen-landing-btn">
-      <span>Khám phá ngay</span>
-      <i class="fa-solid fa-arrow-right"></i>
-    </a>
+  <div class="landing-content">
+    <h1 class="landing-title">Chào mừng bạn đến với Perspect</h1>
+    <p class="landing-subtitle">Nơi mỗi người kể lại cuộc sống từ góc nhìn của mình.</p>
+
+    {% if quote %}
+    <figure class="landing-quote">
+      <blockquote>“{{ quote.text }}”</blockquote>
+      <figcaption>{{ quote.author }}</figcaption>
+    </figure>
+    {% endif %}
+
+    <div class="landing-actions">
+      <a href="{% url 'register' %}" class="btn btn-large">Bắt đầu chia sẻ</a>
+      <p class="landing-login-hint">Đã có tài khoản? <a href="{% url 'login' %}">Đăng nhập</a></p>
+    </div>
+
+    {% if post_count %}
+    <p class="landing-stats">
+      Đã có {{ post_count }} bài viết từ {{ member_count }} thành viên{% if tag_count %}, trong {{ tag_count }} chủ đề{% endif %}.
+    </p>
+    {% endif %}
   </div>
 </section>
+
+<script>
+  // Người dùng bật "giảm chuyển động": dừng video ở khung hình đầu
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const v = document.querySelector('.landing-video');
+    v.removeAttribute('autoplay');
+    v.pause();
+  }
+</script>
 {% endblock %}

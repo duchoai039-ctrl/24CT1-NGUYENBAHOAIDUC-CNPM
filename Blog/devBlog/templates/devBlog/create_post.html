@@ -1,38 +1,10 @@
 {% extends 'devBlog/base.html' %}
 
-{% block title %}Đăng bài - Perspect{% endblock %}
+{% block title %}Viết bài - Perspect{% endblock %}
 
 {% block content %}
-<div class="card">
-  <h1 class="mb-3"><i class="fa-solid fa-pen"></i> Đăng bài viết</h1>
-  <form method="POST" enctype="multipart/form-data" class="form-group">
-    {% csrf_token %}
-    <div class="form-group">
-      <label for="id_title">Tiêu đề:</label>
-      <input type="text" name="title" id="id_title" value="{{ form.title.value|default:'' }}" required />
-    </div>
-    <div class="form-group">
-      <label for="id_content">Nội dung:</label>
-      <textarea name="content" id="id_content" rows="6">{{ form.content.value|default:'' }}</textarea>
-    </div>
-    <div class="form-group">
-      <label for="id_image">Hình ảnh:</label>
-      <input type="file" name="image" id="id_image" accept="image/*" />
-    </div>
-    <div class="form-group">
-      <label>Thẻ bài viết:</label>
-      <div class="tag-checkbox-grid">
-        {% for tag in form.tags.field.queryset %}
-          <label>
-            <input type="checkbox" name="tags" value="{{ tag.id }}"
-              {% if tag.id in form.tags.value %}checked{% endif %}
-            />
-            {{ tag.name }}
-          </label>
-        {% endfor %}
-      </div>
-    </div>
-    <button type="submit" class="btn"><i class="fa-solid fa-paper-plane"></i> Đăng bài</button>
-  </form>
+<div class="page-narrow">
+  <h1 class="page-title">Viết bài mới</h1>
+  {% include 'devBlog/_post_form.html' with submit_label='Đăng bài' %}
 </div>
 {% endblock %}
