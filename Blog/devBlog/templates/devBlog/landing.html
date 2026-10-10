@@ -6,31 +6,36 @@
 {% block navbar %}{% endblock %}{# landing không có thanh menu: đăng ký / đăng nhập nằm ngay giữa trang #}
 
 {% block content %}
-<section class="landing">
-  <!-- Video nền 720p (~1 MB, faststart: phát được khi mới tải một phần); poster hiện ngay trong lúc chờ -->
-  <video class="landing-video" autoplay muted loop playsinline
-         poster="{% static 'videos/hero-poster.jpg' %}" aria-hidden="true">
-    <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
-  </video>
-  <div class="landing-overlay"></div>
-
-  <div class="landing-content">
-    <h1 class="landing-title">Chào mừng bạn đến với Perspect</h1>
-    <p class="landing-subtitle">Nơi mỗi người kể lại cuộc sống từ góc nhìn của mình.</p>
-
-    <div class="landing-actions">
-      <a href="{% url 'register' %}" class="btn btn-large">Bắt đầu chia sẻ</a>
-      <p class="landing-login-hint">Đã có tài khoản? <a href="{% url 'login' %}">Đăng nhập</a></p>
+{# Ba màn hình xếp dọc, mỗi màn một ảnh phủ kín + chữ. Ảnh chỉ để trang trí nên alt rỗng. #}
+<div class="landing">
+  <section class="landing-panel" id="dau-trang">
+    <img class="landing-bg" src="{% static 'img/landing/landing-1.jpg' %}" alt="" fetchpriority="high">
+    <div class="landing-content">
+      <h1 class="landing-title">Chào mừng bạn đến với Perspect</h1>
+      <p class="landing-subtitle">Nơi mỗi người kể lại cuộc sống từ góc nhìn của mình.</p>
+      <div class="landing-actions">
+        <a href="{% url 'register' %}" class="btn btn-large">Bắt đầu chia sẻ</a>
+        <p class="landing-login-hint">Đã có tài khoản? <a href="{% url 'login' %}">Đăng nhập</a></p>
+      </div>
     </div>
-  </div>
-</section>
+    <a href="#ke-dieu-ban-thay" class="scroll-hint">Kéo xuống <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></a>
+  </section>
 
-<script>
-  // Người dùng bật "giảm chuyển động": dừng video ở khung hình đầu
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const v = document.querySelector('.landing-video');
-    v.removeAttribute('autoplay');
-    v.pause();
-  }
-</script>
+  <section class="landing-panel landing-panel-right" id="ke-dieu-ban-thay">
+    <img class="landing-bg" src="{% static 'img/landing/landing-2.jpg' %}" alt="" loading="lazy" decoding="async">
+    <div class="landing-content">
+      <h2 class="landing-title">Kể điều bạn thấy.</h2>
+      <p class="landing-subtitle">Một bài viết, một tấm ảnh, chỉ cần một góc nhìn của riêng bạn.</p>
+    </div>
+  </section>
+
+  <section class="landing-panel">
+    <img class="landing-bg" src="{% static 'img/landing/landing-3.jpg' %}" alt="" loading="lazy" decoding="async">
+    <div class="landing-content">
+      <h2 class="landing-title">Nhìn đời qua mắt người khác.</h2>
+      <p class="landing-subtitle">Theo dõi những người bạn thích, thả tim, bình luận.</p>
+    </div>
+    <a href="#dau-trang" class="scroll-hint">Lên đầu trang <i class="fa-solid fa-chevron-up" aria-hidden="true"></i></a>
+  </section>
+</div>
 {% endblock %}
