@@ -8,14 +8,14 @@
   {# Tấm 1 — bài viết. Thứ tự: tác giả + thời gian (cùng hàng) -> nội dung -> chủ đề -> hình ảnh -> thích #}
   <div class="article-body">
   <div class="post-byline post-byline-large">
-    <a href="{% url 'user_profile' post.author.username %}" class="byline-person">
-      <span class="byline-avatar" aria-hidden="true">{{ post.author.username|first|upper }}</span>
-      <span class="post-author">{{ post.author.username }}</span>
+    <a href="{% url 'user_profile' post.author.id %}" class="byline-person">
+      <span class="byline-avatar" aria-hidden="true">{{ post.author|chu_dau }}</span>
+      <span class="post-author">{{ post.author|ten }}</span>
     </a>
     <time class="post-time" datetime="{{ post.created_at|date:'c' }}" title="{{ post.created_at|ngay_gio }}">{{ post.created_at|thoi_gian }}</time>
   </div>
 
-  <h1 class="visually-hidden">Bài viết của {{ post.author.username }}</h1>
+  <h1 class="visually-hidden">Bài viết của {{ post.author|ten }}</h1>
   <div class="prose">{{ post.content|linebreaks }}</div>
 
   {% if post.tags.all %}
@@ -27,7 +27,7 @@
   {% endif %}
 
   {% if post.image %}
-    <img class="article-image" src="{{ post.image.url }}" alt="Ảnh trong bài của {{ post.author.username }}" />
+    <img class="article-image" src="{{ post.image.url }}" alt="Ảnh trong bài của {{ post.author|ten }}" />
   {% endif %}
 
   <footer class="article-footer">
@@ -65,7 +65,7 @@
     {% for comment in comments %}
       <div class="comment">
         <p class="comment-meta">
-          <a href="{% url 'user_profile' comment.author.username %}" class="post-author">{{ comment.author.username }}</a>
+          <a href="{% url 'user_profile' comment.author.id %}" class="post-author">{{ comment.author|ten }}</a>
           <time datetime="{{ comment.created_at|date:'c' }}" title="{{ comment.created_at|ngay_gio }}">{{ comment.created_at|thoi_gian }}</time>
         </p>
         <div class="comment-body">{{ comment.content|linebreaks }}</div>

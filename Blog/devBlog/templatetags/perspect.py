@@ -1,7 +1,22 @@
 from django import template
 from django.utils import timezone
 
+# pyrefly: ignore [missing-import]
+from devBlog.models import display_name
+
 register = template.Library()
+
+
+@register.filter
+def ten(user):
+    """Tên hiện trên web: "Nguyễn Hoài Đức" (Họ + Tên)."""
+    return display_name(user) if user else ''
+
+
+@register.filter
+def chu_dau(user):
+    """Chữ trên avatar: chữ đầu của Tên ("Đức" -> "Đ")."""
+    return (user.first_name or display_name(user))[:1].upper() if user else ''
 
 
 @register.filter

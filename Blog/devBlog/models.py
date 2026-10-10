@@ -9,6 +9,13 @@ TITLE_MAX_CHARS = 100
 EXCERPT_MAX_CHARS = 300
 
 
+def display_name(user):
+    """Tên hiện trên web, theo thứ tự Việt Nam: Họ + Tên ("Nguyễn Hoài Đức").
+    Tài khoản cũ chưa điền tên thì tạm dùng tên đăng nhập cũ (vốn đã công khai),
+    không dùng email để khỏi lộ email."""
+    return f'{user.last_name} {user.first_name}'.strip() or user.username
+
+
 def first_sentence(text):
     """Câu đầu tiên của dòng có chữ đầu tiên (bỏ dòng trống ở đầu)."""
     first_line = text.strip().split('\n', 1)[0]
@@ -33,9 +40,12 @@ class UserProfile(models.Model):
         blank=True,
         related_name='interested_users'
     )
+    # Dạng 0xxxxxxxxx (xem forms.normalize_phone). Tài khoản cũ chưa có số nên cho phép trống;
+    # NULL không tính là trùng nhau nên unique vẫn đúng.
+    phone = models.CharField(max_length=10, unique=True, null=True, blank=True)
 
     def __str__(self):
-        return self.user.username
+        return display_name(self.user)
 
 
 class Post(models.Model):
@@ -95,7 +105,7 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.author.username + ': ' + self.content[:30]
+        return display_name(self.author) + ': ' + self.content[:30]
 
 
 class Follow(models.Model):
@@ -115,4 +125,4 @@ class Follow(models.Model):
         unique_together = ('follower', 'following')
 
     def __str__(self):
-        return f'{self.follower.username} follows {self.following.username}'
+        return f'{display_name(self.follower)} theo dõi {display_name(self.following)}'

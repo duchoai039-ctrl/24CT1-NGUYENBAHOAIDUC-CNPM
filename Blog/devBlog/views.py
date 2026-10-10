@@ -4,13 +4,14 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Post, Tag, UserProfile, Follow, first_sentence
-from .forms import RegisterForm, PostForm, CommentForm
+from .models import Post, Tag, UserProfile, Follow, first_sentence, display_name
+from .forms import RegisterForm, IntroForm, PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, Exists, OuterRef, Max, F
+from django.db.models import Q, Count, Exists, OuterRef, Max, F, Value
+from django.db.models.functions import Concat
 from django.utils import timezone
 from django.utils.text import Truncator
 from datetime import timedelta
@@ -35,27 +36,39 @@ FOLLOWING_SIDEBAR_LIMIT = 8
 
 def following_sidebar(user):
     # Cột "Đang theo dõi": người đăng bài gần nhất lên đầu, người chưa có bài xuống cuối.
-    # Chưa theo dõi ai -> gợi ý vài người viết nhiều nhất mà mình chưa theo dõi.
     following = (User.objects.filter(followers__follower=user)
                  .annotate(last_post_at=Max('post__created_at'))
-                 .order_by(F('last_post_at').desc(nulls_last=True), 'username'))
+                 .order_by(F('last_post_at').desc(nulls_last=True), 'first_name', 'id'))
     total = following.count()
     shown = list(following[:FOLLOWING_SIDEBAR_LIMIT])
     recent = timezone.now() - timedelta(hours=24)
     for u in shown:
         u.posted_recently = bool(u.last_post_at and u.last_post_at >= recent)
-
-    suggestions = []
-    if not total:
-        suggestions = (User.objects.exclude(id=user.id)
-                       .annotate(n_posts=Count('post'))
-                       .filter(n_posts__gt=0)
-                       .order_by('-n_posts', 'username')[:3])
     return {
         'following_users': shown,
         'following_more': total - len(shown),
-        'follow_suggestions': suggestions,
+        'people_you_may_know': people_you_may_know(user),
     }
+
+
+SUGGESTION_LIMIT = 5
+
+
+def people_you_may_know(user):
+    """ "Những người bạn có thể biết": người mình chưa theo dõi, xếp theo
+    đang theo dõi mình > nhiều bạn chung > cùng chủ đề quan tâm > viết nhiều > mới tham gia."""
+    following_ids = Follow.objects.filter(follower=user).values('following')
+    my_tags = UserProfile.interests.through.objects.filter(userprofile__user=user).values('tag')
+    return (User.objects
+            .exclude(id=user.id).exclude(id__in=following_ids)
+            .filter(is_active=True).exclude(first_name='')   # chưa điền tên (vừa đăng ký dở) thì chưa gợi ý
+            .annotate(
+                follows_me=Exists(Follow.objects.filter(follower=OuterRef('pk'), following=user)),
+                mutual=Count('followers', filter=Q(followers__follower__in=following_ids), distinct=True),
+                shared=Count('profile__interests', filter=Q(profile__interests__in=my_tags), distinct=True),
+                n_posts=Count('post', distinct=True),
+            )
+            .order_by('-follows_me', '-mutual', '-shared', '-n_posts', '-date_joined')[:SUGGESTION_LIMIT])
 
 
 def render_feed(request, posts, extra):
@@ -81,7 +94,7 @@ def featured_quote(posts):
         if len(sentence) >= QUOTE_MIN_CHARS:
             return {
                 'text': Truncator(sentence).chars(QUOTE_MAX_CHARS),
-                'author': post.author.username,
+                'author': display_name(post.author),
                 'post_id': post.id,
                 'created_at': post.created_at,
                 'likes': post.n_likes,
@@ -97,11 +110,14 @@ def home(request):
     query = request.GET.get('q', '').strip()
 
     if query:
-        posts = Post.objects.filter(
+        # Tìm theo tên tác giả: ghép "Họ Tên" để gõ cả họ lẫn tên vẫn ra
+        posts = Post.objects.annotate(
+            author_name=Concat('author__last_name', Value(' '), 'author__first_name'),
+        ).filter(
             Q(title__icontains=query) |
             Q(content__icontains=query) |
             Q(tags__name__icontains=query) |
-            Q(author__username__icontains=query)
+            Q(author_name__icontains=query)
         ).distinct().order_by('-created_at')
     else:
         posts = Post.objects.all().order_by('-created_at')
@@ -163,58 +179,55 @@ def like_post(request, post_id):
 def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
-
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.save()
-
-            # Create user profile and save interests
-            profile = UserProfile.objects.create(user=user)
-            interests = form.cleaned_data.get('interests')
-            if interests:
-                profile.interests.set(interests)
-
-            request.session['registered_username'] = user.username
-            messages.success(request, 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.')
-            return redirect('login')
-
+            user = form.save()
+            # Đăng nhập luôn rồi sang bước giới thiệu (Họ + Tên), không bắt nhập lại
+            login(request, user, backend='devBlog.backends.EmailOrPhoneBackend')
+            return redirect('complete_profile')
     else:
         form = RegisterForm()
 
-    tags = Tag.objects.all()
+    return render(request, 'devBlog/register.html', {'form': form})
 
-    return render(request, 'devBlog/register.html', {
-        'form': form,
-        'tags': tags
-    })
+
+@login_required
+def complete_profile(request):
+    """ "Mọi người có thể biết đến bạn thông qua": Họ + Tên (bắt buộc) và chủ đề quan tâm."""
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        form = IntroForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            user.last_name = form.cleaned_data['last_name']
+            user.first_name = form.cleaned_data['first_name']
+            user.save(update_fields=['last_name', 'first_name'])
+            profile.interests.set(form.cleaned_data['interests'])
+            messages.success(request, f'Chào {user.first_name}, chúc bạn có những góc nhìn thú vị!')
+            return redirect('home')
+    else:
+        form = IntroForm(initial={
+            'last_name': request.user.last_name,
+            'first_name': request.user.first_name,
+            'interests': profile.interests.all(),
+        })
+
+    return render(request, 'devBlog/welcome.html', {'form': form, 'tags': Tag.objects.all()})
 
 
 def login_view(request):
-    registered_username = request.session.pop('registered_username', '')
-
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        user = authenticate(
-            request,
-            username=username,
-            password=password
-        )
-
+        ident = request.POST.get('ident', '').strip()
+        user = authenticate(request, username=ident, password=request.POST.get('password'))
         if user is not None:
             login(request, user)
             return redirect('home')
 
         return render(request, 'devBlog/login.html', {
-            'error': 'Sai tên đăng nhập hoặc mật khẩu.',
-            'registered_username': username,
+            'error': 'Sai Gmail / số điện thoại hoặc mật khẩu.',
+            'ident': ident,
         })
 
-    return render(request, 'devBlog/login.html', {
-        'registered_username': registered_username,
-    })
+    return render(request, 'devBlog/login.html')
 
 
 @require_POST
@@ -291,12 +304,12 @@ def delete_post(request, post_id):
 
 @login_required
 def profile(request):
-    return user_profile(request, request.user.username)
+    return user_profile(request, request.user.id)
 
 
 @login_required
-def user_profile(request, username):
-    profile_user = get_object_or_404(User, username=username)
+def user_profile(request, user_id):
+    profile_user = get_object_or_404(User, id=user_id)
     posts = posts_with_stats(
         Post.objects.filter(author=profile_user).order_by('-created_at'),
         request.user,
@@ -329,14 +342,14 @@ def user_profile(request, username):
 
 @login_required
 @require_POST
-def toggle_follow(request, username):
-    target_user = get_object_or_404(User, username=username)
+def toggle_follow(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
     is_fetch = request.headers.get('X-Requested-With') == 'fetch'
 
     if target_user == request.user:
         if is_fetch:
             return JsonResponse({'error': 'Không thể tự theo dõi chính mình.'}, status=400)
-        return redirect('user_profile', username=username)
+        return redirect('user_profile', user_id=user_id)
 
     # Xóa trước; không có gì để xóa nghĩa là chưa theo dõi -> tạo mới.
     # get_or_create tự xử lý khi hai lần bấm cùng tạo (không văng IntegrityError).
@@ -353,7 +366,7 @@ def toggle_follow(request, username):
             'followers': Follow.objects.filter(following=target_user).count(),
         })
 
-    return redirect('user_profile', username=username)
+    return redirect('user_profile', user_id=user_id)
 
 
 @login_required

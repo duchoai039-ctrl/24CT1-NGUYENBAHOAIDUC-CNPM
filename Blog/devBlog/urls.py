@@ -10,14 +10,15 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('welcome/', views.complete_profile, name='complete_profile'),
     
     path('post/create/', views.create_post, name='create_post'),
     path('post/<int:post_id>/edit/', views.edit_post, name='edit_post'),
     path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
 
     path('profile/', views.profile, name='profile'),
-    path('profile/<str:username>/', views.user_profile, name='user_profile'),
-    path('profile/<str:username>/follow/', views.toggle_follow, name='toggle_follow'),
+    path('profile/<int:user_id>/', views.user_profile, name='user_profile'),
+    path('profile/<int:user_id>/follow/', views.toggle_follow, name='toggle_follow'),
     path('my-posts/', views.my_posts, name='my_posts'),
     path('tag/<int:tag_id>/', views.posts_by_tag, name='posts_by_tag'),
 ]

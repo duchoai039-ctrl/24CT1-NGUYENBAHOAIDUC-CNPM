@@ -11,8 +11,8 @@
   <form method="POST" class="stack-form">
     {% csrf_token %}
     <div class="field">
-      <label for="username">Tên đăng nhập</label>
-      <input type="text" name="username" id="username" value="{{ registered_username|default:'' }}" autocomplete="username" required />
+      <label for="ident">Gmail hoặc số điện thoại</label>
+      <input type="text" name="ident" id="ident" value="{{ ident|default:'' }}" autocomplete="username" autocapitalize="none" spellcheck="false" required />
     </div>
     <div class="field">
       <label for="password">Mật khẩu</label>

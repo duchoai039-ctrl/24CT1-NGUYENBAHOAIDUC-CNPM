@@ -97,6 +97,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'devBlog.middleware.RequireIntroMiddleware',   # chưa có Họ + Tên thì đưa về bước giới thiệu
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -137,6 +138,9 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+
+# Đăng nhập bằng Gmail hoặc số điện thoại (không còn tên đăng nhập)
+AUTHENTICATION_BACKENDS = ['devBlog.backends.EmailOrPhoneBackend']
 
 AUTH_PASSWORD_VALIDATORS = [
     {

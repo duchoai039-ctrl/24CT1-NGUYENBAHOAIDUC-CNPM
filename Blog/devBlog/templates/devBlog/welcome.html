@@ -1,0 +1,47 @@
+{% extends 'devBlog/base.html' %}
+
+{% block title %}Giới thiệu bản thân - Perspect{% endblock %}
+
+{% block content %}
+<div class="auth">
+  <h1 class="page-title">Mọi người có thể biết đến bạn thông qua</h1>
+  <p class="lead">Tên này sẽ hiện trên bài viết, bình luận và trang cá nhân của bạn.</p>
+  {% if form.errors %}
+    <p class="form-error" role="alert">Có vài chỗ cần sửa, xem ghi chú bên dưới từng ô.</p>
+  {% endif %}
+  <form method="POST" class="stack-form">
+    {% csrf_token %}
+    <div class="name-row">
+      <div class="field">
+        <label for="last_name">Họ</label>
+        <input type="text" name="last_name" id="last_name" value="{{ form.last_name.value|default:'' }}" autocomplete="family-name" placeholder="Nguyễn" required />
+        {% for error in form.last_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="first_name">Tên</label>
+        <input type="text" name="first_name" id="first_name" value="{{ form.first_name.value|default:'' }}" autocomplete="given-name" placeholder="Hoài Đức" required />
+        {% for error in form.first_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+    {% if tags %}
+    <fieldset class="field">
+      <legend>Bạn quan tâm chủ đề nào? <span class="optional">(không bắt buộc)</span></legend>
+      <div class="choice-chips">
+        {% for tag in tags %}
+          <label>
+            <input type="checkbox" name="interests" value="{{ tag.id }}"
+              {% for v in form.interests.value %}{% if v|stringformat:"s" == tag.id|stringformat:"s" or v.id == tag.id %}checked{% endif %}{% endfor %} />
+            {{ tag.name }}
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {% endif %}
+    <button type="submit" class="btn btn-block">Xong</button>
+  </form>
+  <form method="POST" action="{% url 'logout' %}" class="auth-switch">
+    {% csrf_token %}
+    Không phải bạn? <button type="submit" class="link-button">Đăng xuất</button>
+  </form>
+</div>
+{% endblock %}

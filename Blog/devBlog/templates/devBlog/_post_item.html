@@ -9,9 +9,9 @@
   {% if not hide_author %}
     {# Tác giả và thời gian đăng nằm cùng một hàng #}
     <div class="post-byline">
-      <a href="{% url 'user_profile' post.author.username %}" class="byline-person">
-        <span class="byline-avatar" aria-hidden="true">{{ post.author.username|first|upper }}</span>
-        <span class="post-author">{{ post.author.username }}</span>
+      <a href="{% url 'user_profile' post.author.id %}" class="byline-person">
+        <span class="byline-avatar" aria-hidden="true">{{ post.author|chu_dau }}</span>
+        <span class="post-author">{{ post.author|ten }}</span>
       </a>
       <time class="post-time" datetime="{{ post.created_at|date:'c' }}" title="{{ post.created_at|ngay_gio }}">{{ post.created_at|thoi_gian }}</time>
     </div>

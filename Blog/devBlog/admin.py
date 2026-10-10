@@ -19,7 +19,7 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ('id', 'noi_dung', 'author', 'created_at', 'so_thich', 'so_binh_luan')
     list_display_links = ('id', 'noi_dung')
     list_filter = ('created_at', 'tags')
-    search_fields = ('content', 'author__username')
+    search_fields = ('content', 'author__last_name', 'author__first_name', 'author__email')
     autocomplete_fields = ('author', 'likes')
     filter_horizontal = ('tags',)
     readonly_fields = ('title', 'created_at', 'updated_at')   # title tự lấy từ câu đầu nội dung
@@ -48,7 +48,7 @@ class PostAdmin(admin.ModelAdmin):
 class CommentAdmin(admin.ModelAdmin):
     list_display = ('id', 'noi_dung', 'author', 'bai_viet', 'created_at')
     list_filter = ('created_at',)
-    search_fields = ('content', 'author__username', 'post__content')
+    search_fields = ('content', 'author__last_name', 'author__first_name', 'author__email', 'post__content')
     autocomplete_fields = ('post', 'author')
     ordering = ('-created_at',)
     list_select_related = ('author', 'post')
@@ -65,7 +65,7 @@ class CommentAdmin(admin.ModelAdmin):
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ('follower', 'following', 'created_at')
-    search_fields = ('follower__username', 'following__username')
+    search_fields = ('follower__first_name', 'follower__email', 'following__first_name', 'following__email')
     autocomplete_fields = ('follower', 'following')
     list_select_related = ('follower', 'following')
     ordering = ('-created_at',)
@@ -86,7 +86,12 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user',)
-    search_fields = ('user__username',)
+    list_display = ('__str__', 'email', 'phone')
+    list_select_related = ('user',)
+    search_fields = ('user__last_name', 'user__first_name', 'user__email', 'phone')
+
+    @admin.display(description='Gmail', ordering='user__email')
+    def email(self, obj):
+        return obj.user.email
     autocomplete_fields = ('user',)
     filter_horizontal = ('interests',)

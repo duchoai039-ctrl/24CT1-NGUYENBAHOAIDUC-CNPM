@@ -11,35 +11,21 @@
   <form method="POST" class="stack-form">
     {% csrf_token %}
     <div class="field">
-      <label for="username">Tên đăng nhập</label>
-      <input type="text" name="username" id="username" value="{{ form.username.value|default:'' }}" autocomplete="username" required />
-      {% for error in form.username.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-    </div>
-    <div class="field">
-      <label for="email">Email</label>
+      <label for="email">Gmail</label>
       <input type="email" name="email" id="email" value="{{ form.email.value|default:'' }}" autocomplete="email" required />
       {% for error in form.email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
     <div class="field">
+      <label for="phone">Số điện thoại</label>
+      <input type="tel" name="phone" id="phone" value="{{ form.phone.value|default:'' }}" inputmode="tel" autocomplete="tel" placeholder="0912 345 678" required />
+      {% for error in form.phone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="field">
       <label for="password">Mật khẩu</label>
-      <p class="field-hint">Ít nhất 8 ký tự, không toàn số, không quá giống tên đăng nhập.</p>
+      <p class="field-hint">Ít nhất 8 ký tự, không toàn số, không quá giống Gmail.</p>
       <input type="password" name="password" id="password" autocomplete="new-password" required />
       {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
-    {% if tags %}
-    <fieldset class="field">
-      <legend>Bạn quan tâm chủ đề nào? <span class="optional">(không bắt buộc)</span></legend>
-      <div class="choice-chips">
-        {% for tag in tags %}
-          <label>
-            <input type="checkbox" name="interests" value="{{ tag.id }}"
-              {% for v in form.interests.value %}{% if v|stringformat:"s" == tag.id|stringformat:"s" %}checked{% endif %}{% endfor %} />
-            {{ tag.name }}
-          </label>
-        {% endfor %}
-      </div>
-    </fieldset>
-    {% endif %}
     <button type="submit" class="btn btn-block">Tạo tài khoản</button>
   </form>
   <p class="auth-switch">Đã có tài khoản? <a href="{% url 'login' %}">Đăng nhập</a></p>

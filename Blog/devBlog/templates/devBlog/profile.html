@@ -1,7 +1,7 @@
 {% extends 'devBlog/base.html' %}
 {% load perspect %}
 
-{% block title %}{{ profile_user.username }} - Perspect{% endblock %}
+{% block title %}{{ profile_user|ten }} - Perspect{% endblock %}
 
 {% block content %}
 <div class="profile">
@@ -10,10 +10,10 @@
        style="--seed-x: {% widthratio profile_user.id 1 53 %}px; --seed-y: {% widthratio profile_user.id 1 29 %}px;"></div>
 
   <header class="profile-header">
-    <div class="profile-avatar" aria-hidden="true">{{ profile_user.username|first|upper }}</div>
+    <div class="profile-avatar" aria-hidden="true">{{ profile_user|chu_dau }}</div>
 
     <div class="profile-identity">
-      <h1 class="profile-name">{{ profile_user.username }}</h1>
+      <h1 class="profile-name">{{ profile_user|ten }}</h1>
       <p class="profile-joined">Tham gia {{ profile_user.date_joined|ngay }}</p>
       {% if user_profile.interests.all %}
         <p class="profile-interests">Quan tâm:
@@ -26,7 +26,7 @@
       {% if is_own_profile %}
         <a href="{% url 'create_post' %}" class="btn"><i class="fa-solid fa-pen" aria-hidden="true"></i> Viết bài</a>
       {% else %}
-        <form method="POST" action="{% url 'toggle_follow' profile_user.username %}" class="inline-form follow-form">
+        <form method="POST" action="{% url 'toggle_follow' profile_user.id %}" class="inline-form follow-form">
           {% csrf_token %}
           {# Một nút, ba nhãn; CSS chọn nhãn theo trạng thái .is-following và khi rê chuột #}
           <button type="submit" class="btn follow-btn{% if is_following %} is-following{% endif %}"
@@ -59,7 +59,7 @@
 
   <section class="feed profile-feed" aria-labelledby="profile-posts-heading">
     <h2 id="profile-posts-heading" class="section-heading">
-      {% if is_own_profile %}Bài viết của bạn{% else %}Bài viết của {{ profile_user.username }}{% endif %}
+      {% if is_own_profile %}Bài viết của bạn{% else %}Bài viết của {{ profile_user|ten }}{% endif %}
     </h2>
 
     {% for post in posts %}
@@ -70,7 +70,7 @@
           <p>Trang của bạn còn trống. Bài đầu tiên sẽ xuất hiện ở đây, và câu mở đầu của nó là thứ mọi người đọc trước tiên.</p>
           <a href="{% url 'create_post' %}" class="btn">Viết bài đầu tiên</a>
         {% else %}
-          <p>{{ profile_user.username }} chưa đăng bài nào.</p>
+          <p>{{ profile_user|ten }} chưa đăng bài nào.</p>
         {% endif %}
       </div>
     {% endfor %}
