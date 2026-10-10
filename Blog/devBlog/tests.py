@@ -85,7 +85,7 @@ class TopicSearchTests(TestCase):
 
     def test_tim_trong_chu_de(self):
         user = User.objects.create_user('u1', password='Hoa-Sen!2026', first_name='An', last_name='Lê')
-        travel = Tag.objects.create(name='Du lịch')
+        travel = Tag.objects.get(name='Du lịch')   # có sẵn từ migration 0009
         inside = Post.objects.create(author=user, content='Đà Lạt mùa sương.')
         inside.tags.add(travel)
         Post.objects.create(author=user, content='Đà Lạt ngoài chủ đề.')
@@ -237,7 +237,7 @@ class PeopleYouMayKnowTests(TestCase):
         Follow.objects.create(follower=me, following=ban)              # đã theo dõi -> không gợi ý
         Follow.objects.create(follower=theo_doi_toi, following=me)     # đang theo dõi mình
         Follow.objects.create(follower=ban, following=ban_chung)       # bạn của bạn
-        tag = Tag.objects.create(name='Du lịch')
+        tag = Tag.objects.get(name='Du lịch')   # có sẵn từ migration 0009
         me.profile.interests.add(tag)
         cung_chu_de.profile.interests.add(tag)
         Post.objects.create(author=viet_nhieu, content='Một bài.')
