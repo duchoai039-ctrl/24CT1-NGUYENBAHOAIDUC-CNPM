@@ -657,6 +657,19 @@ a:hover { color: var(--gold); }
 .follow-btn-compact { min-width: 0; width: 8rem; min-height: 2.75rem; padding: 0 0.75rem; font-size: 0.85rem; }
 /* Dải "Những người bạn có thể biết" ở đầu bảng tin, chỉ cho màn hẹp: trượt ngang, thẻ dừng đúng mép */
 .suggest-strip { display: none; }
+.topic-chips {
+  display: none; gap: 0.5rem;
+  margin: 0 -1rem 0.75rem; padding: 0.25rem 1rem 0.5rem;   /* vuốt sát mép màn hình */
+  overflow-x: auto; scrollbar-width: none;
+}
+.topic-chips::-webkit-scrollbar { display: none; }
+.topic-chips a {
+  flex-shrink: 0; display: inline-flex; align-items: center;
+  min-height: 2.5rem; padding: 0 1rem;
+  border-radius: 999px; background: var(--tag-bg); color: var(--gold);
+  font-size: 0.925rem; font-weight: 500; text-decoration: none; white-space: nowrap;
+}
+.topic-chips a[aria-current="page"] { background: var(--accent); color: var(--on-accent); }
 .suggest-strip h2 { font-size: 0.95rem; font-weight: 600; margin: 1.25rem 0 0.75rem; }
 .suggest-strip-list {
   display: flex; gap: 0.75rem;
@@ -1082,7 +1095,8 @@ body.landing-page-active .footer { display: none; }
   .feed-layout { grid-template-columns: minmax(0, var(--measure)); gap: 2.5rem; }
   .feed-aside { position: static; max-height: none; overflow: visible; padding-top: 0; }
   .suggest-strip { display: block; }
-  .aside-following, .aside-suggest, .aside-latest-section { display: none; }   /* đã đưa lên đầu bảng tin */
+  .topic-chips { display: flex; }
+  .aside-following, .aside-suggest, .aside-latest-section, .aside-topics { display: none; }   /* đã đưa lên đầu bảng tin */
 }
 
 @media (max-width: 768px) {

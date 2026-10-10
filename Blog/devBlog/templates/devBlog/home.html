@@ -19,6 +19,16 @@
       {% endif %}
     </header>
 
+    {# Màn hẹp: chủ đề thành hàng vuốt ngang ngay đầu bảng tin (bản trong cột phụ bị ẩn) #}
+    {% if tags and not query %}
+      <nav class="topic-chips" aria-label="Chủ đề">
+        <a href="{% url 'home' %}"{% if not current_tag %} aria-current="page"{% endif %}>Tất cả</a>
+        {% for tag in tags %}
+          <a href="{% url 'posts_by_tag' tag.id %}"{% if current_tag.id == tag.id %} aria-current="page"{% endif %}>{{ tag.name }}</a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+
     {# Chỗ viết bài: trông như ô nhập, bấm vào mở trang viết bài #}
     {% if not query %}
       <a href="{% url 'create_post' %}" class="composer" aria-label="Viết bài">
