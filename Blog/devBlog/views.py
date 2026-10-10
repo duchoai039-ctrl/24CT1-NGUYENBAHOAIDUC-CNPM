@@ -61,7 +61,9 @@ def people_you_may_know(user):
     my_tags = UserProfile.interests.through.objects.filter(userprofile__user=user).values('tag')
     return (User.objects
             .exclude(id=user.id).exclude(id__in=following_ids)
-            .filter(is_active=True).exclude(first_name='')   # chưa điền tên (vừa đăng ký dở) thì chưa gợi ý
+            .filter(is_active=True)
+            # Vừa đăng ký dở (chưa có tên, chỉ có mã ẩn u + 12 ký tự) thì chưa gợi ý; tài khoản cũ vẫn gợi ý bằng tên cũ
+            .exclude(first_name='', username__regex=r'^u[0-9a-f]{12}$')
             .annotate(
                 follows_me=Exists(Follow.objects.filter(follower=OuterRef('pk'), following=user)),
                 mutual=Count('followers', filter=Q(followers__follower__in=following_ids), distinct=True),

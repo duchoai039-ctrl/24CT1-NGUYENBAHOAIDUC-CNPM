@@ -25,7 +25,13 @@
     </figure>
 
     <div class="image-picker">
-      <input type="file" name="image" id="id_image" accept="image/*" />
+      {# Ô chọn file của trình duyệt (chữ tiếng Anh, khó chỉnh) được ẩn đi; nút "Chọn ảnh" là nhãn của nó #}
+      <input type="file" name="image" id="id_image" accept="image/*" class="file-input" />
+      <label for="id_image" class="btn btn-secondary btn-small file-btn">
+        <i class="fa-regular fa-image" aria-hidden="true"></i>
+        <span id="image-pick-label">{% if post.image %}Chọn ảnh khác{% else %}Chọn ảnh{% endif %}</span>
+      </label>
+      <span class="file-name" id="image-name" aria-live="polite"></span>
       <button type="button" class="btn btn-secondary btn-small" id="image-clear" hidden>Bỏ ảnh</button>
     </div>
     <p class="field-error" id="image-error" hidden>Tệp này không phải ảnh. Hãy chọn tệp JPG, PNG, GIF hoặc WEBP.</p>
@@ -62,12 +68,14 @@
     const caption = document.getElementById('image-preview-caption');
     const clearBtn = document.getElementById('image-clear');
     const error = document.getElementById('image-error');
+    const fileName = document.getElementById('image-name');
     const original = box.dataset.original;   // ảnh đang có (khi sửa bài), rỗng khi đăng mới
     let objectUrl = null;
 
     function showOriginal() {
       if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
       clearBtn.hidden = true;
+      fileName.textContent = '';
       if (original) {
         img.src = original;
         caption.textContent = 'Ảnh hiện tại. Chọn ảnh khác để thay.';
@@ -94,6 +102,7 @@
       caption.textContent = original ? 'Ảnh mới (sẽ thay ảnh hiện tại khi lưu).' : 'Ảnh sẽ đăng kèm bài.';
       box.hidden = false;
       clearBtn.hidden = false;
+      fileName.textContent = file.name;
     });
 
     clearBtn.addEventListener('click', function () {

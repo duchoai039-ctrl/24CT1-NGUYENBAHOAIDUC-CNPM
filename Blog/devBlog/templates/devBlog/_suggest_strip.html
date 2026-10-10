@@ -1,0 +1,49 @@
+{% load perspect %}
+{% comment %} Màn hẹp: cột phụ bị đẩy xuống cuối trang, nên đưa "Đang theo dõi" (hàng avatar)
+  và "Những người bạn có thể biết" (thẻ trượt ngang) lên đầu bảng tin. Màn rộng đã có trong cột phụ. {% endcomment %}
+{% if following_users %}
+<section class="suggest-strip" aria-labelledby="strip-following-heading">
+  <h2 id="strip-following-heading">Đang theo dõi</h2>
+  <ul class="suggest-strip-list follow-row">
+    {% for u in following_users %}
+      <li>
+        <a href="{% url 'user_profile' u.id %}" class="follow-row-person">
+          <span class="follow-row-avatar{% if u.posted_recently %} has-new{% endif %}" aria-hidden="true">{{ u|chu_dau }}</span>
+          <span class="follow-row-name">{{ u|ten }}{% if u.posted_recently %}<span class="visually-hidden"> (có bài mới)</span>{% endif %}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if people_you_may_know %}
+<section class="suggest-strip" aria-labelledby="strip-heading">
+  <h2 id="strip-heading">Những người bạn có thể biết</h2>
+  <ul class="suggest-strip-list">
+    {% for u in people_you_may_know %}
+      <li class="suggest-card">
+        <a href="{% url 'user_profile' u.id %}" class="suggest-card-person">
+          <span class="suggest-card-avatar" aria-hidden="true">{{ u|chu_dau }}</span>
+          <span class="suggest-card-name">{{ u|ten }}</span>
+          <span class="following-meta">
+            {% if u.follows_me %}Đang theo dõi bạn
+            {% elif u.mutual %}{{ u.mutual }} bạn chung
+            {% elif u.shared %}Cùng quan tâm {{ u.shared }} chủ đề
+            {% elif u.n_posts %}{{ u.n_posts }} bài viết
+            {% else %}Thành viên mới{% endif %}
+          </span>
+        </a>
+        <form method="POST" action="{% url 'toggle_follow' u.id %}" class="inline-form follow-form">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-small follow-btn follow-btn-compact" aria-pressed="false">
+            <span class="follow-label-off">Theo dõi<span class="visually-hidden"> {{ u|ten }}</span></span>
+            <span class="follow-label-on"><i class="fa-solid fa-check" aria-hidden="true"></i> Đã theo dõi</span>
+            <span class="follow-label-hover">Bỏ theo dõi</span>
+          </button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}

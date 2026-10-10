@@ -18,6 +18,10 @@
       {% endif %}
     </header>
 
+    {% if not query and not current_tag and posts.number == 1 %}
+      {% include 'devBlog/_suggest_strip.html' %}
+    {% endif %}
+
     {% for post in posts %}
       {% include 'devBlog/_post_item.html' %}
     {% empty %}

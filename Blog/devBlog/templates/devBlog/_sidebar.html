@@ -1,5 +1,5 @@
 {% load perspect %}
-<section class="aside-section" aria-labelledby="following-heading">
+<section class="aside-section aside-following" aria-labelledby="following-heading">
   <h2 id="following-heading">Đang theo dõi</h2>
   {% if following_users %}
     <ul class="following-list">
@@ -29,7 +29,7 @@
 </section>
 
 {% if people_you_may_know %}
-<section class="aside-section" aria-labelledby="suggest-heading">
+<section class="aside-section aside-suggest" aria-labelledby="suggest-heading">
   <h2 id="suggest-heading">Những người bạn có thể biết</h2>
   <ul class="following-list">
     {% for u in people_you_may_know %}
@@ -74,7 +74,7 @@
 
 {% comment %} Trang chủ thường đã là danh sách bài mới nhất; chỉ cần "Mới đăng" khi đang lọc {% endcomment %}
 {% if query or current_tag %}
-<section class="aside-section">
+<section class="aside-section aside-latest-section">
   <h2>Mới đăng</h2>
   <ul class="aside-latest">
     {% for p in latest_posts %}

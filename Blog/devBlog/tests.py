@@ -141,10 +141,10 @@ class PeopleYouMayKnowTests(TestCase):
         return u
 
     def test_thu_tu_goi_y(self):
-        me, ban, theo_doi_toi, ban_chung, cung_chu_de, viet_nhieu, chua_ten = (
-            self.make(n) for n in ('me', 'ban', 'theodoitoi', 'banchung', 'cungchude', 'vietnhieu', 'chuaten'))
-        chua_ten.first_name = ''
-        chua_ten.save()
+        me, ban, theo_doi_toi, ban_chung, cung_chu_de, viet_nhieu, dang_ky_do, tai_khoan_cu = (
+            self.make(n) for n in ('me', 'ban', 'theodoitoi', 'banchung', 'cungchude', 'vietnhieu',
+                                   'u0123456789ab', 'taikhoancu'))
+        User.objects.filter(id__in=[dang_ky_do.id, tai_khoan_cu.id]).update(first_name='', last_name='')
         Follow.objects.create(follower=me, following=ban)              # đã theo dõi -> không gợi ý
         Follow.objects.create(follower=theo_doi_toi, following=me)     # đang theo dõi mình
         Follow.objects.create(follower=ban, following=ban_chung)       # bạn của bạn
@@ -153,5 +153,6 @@ class PeopleYouMayKnowTests(TestCase):
         cung_chu_de.profile.interests.add(tag)
         Post.objects.create(author=viet_nhieu, content='Một bài.')
 
-        names = [u.first_name for u in people_you_may_know(me)]
-        self.assertEqual(names, ['theodoitoi', 'banchung', 'cungchude', 'vietnhieu'])
+        # Vừa đăng ký dở (mã ẩn, chưa tên) thì không gợi ý; tài khoản cũ chưa tên vẫn gợi ý (xếp cuối: chưa có bài)
+        names = [u.username for u in people_you_may_know(me)]
+        self.assertEqual(names, ['theodoitoi', 'banchung', 'cungchude', 'vietnhieu', 'taikhoancu'])
