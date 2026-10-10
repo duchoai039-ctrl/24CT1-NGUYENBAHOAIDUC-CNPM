@@ -3,6 +3,7 @@
 
 {% block title %}Perspect, nơi chia sẻ góc nhìn cuộc sống{% endblock %}
 {% block body_class %}landing-page-active{% endblock %}
+{% block navbar %}{% endblock %}{# landing không có thanh menu: đăng ký / đăng nhập nằm ngay giữa trang #}
 
 {% block content %}
 <section class="landing">
@@ -17,23 +18,10 @@
     <h1 class="landing-title">Chào mừng bạn đến với Perspect</h1>
     <p class="landing-subtitle">Nơi mỗi người kể lại cuộc sống từ góc nhìn của mình.</p>
 
-    {% if quote %}
-    <figure class="landing-quote">
-      <blockquote>“{{ quote.text }}”</blockquote>
-      <figcaption>{{ quote.author }}</figcaption>
-    </figure>
-    {% endif %}
-
     <div class="landing-actions">
       <a href="{% url 'register' %}" class="btn btn-large">Bắt đầu chia sẻ</a>
       <p class="landing-login-hint">Đã có tài khoản? <a href="{% url 'login' %}">Đăng nhập</a></p>
     </div>
-
-    {% if post_count %}
-    <p class="landing-stats">
-      Đã có {{ post_count }} bài viết từ {{ member_count }} thành viên{% if tag_count %}, trong {{ tag_count }} chủ đề{% endif %}.
-    </p>
-    {% endif %}
   </div>
 </section>
 

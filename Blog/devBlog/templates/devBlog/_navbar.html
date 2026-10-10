@@ -8,8 +8,8 @@
       <span class="logo-text">Perspect</span>
     </a>
     {% if user.is_authenticated %}
+      {# Không cần "Trang chủ": bấm logo Perspect đã về trang chủ #}
       <nav class="nav-links">
-        <a href="{% url 'home' %}"><i class="fa-solid fa-house" aria-hidden="true"></i><span class="nav-label">Trang chủ</span></a>
         <a href="{% url 'create_post' %}"><i class="fa-solid fa-pen" aria-hidden="true"></i><span class="nav-label">Viết bài</span></a>
       </nav>
     {% endif %}
@@ -52,9 +52,6 @@
           <hr class="dropdown-divider" />
           <a href="{% url 'profile' %}" class="dropdown-item">
             <i class="fa-solid fa-user"></i> Trang cá nhân
-          </a>
-          <a href="{% url 'create_post' %}" class="dropdown-item">
-            <i class="fa-solid fa-pen-to-square"></i> Viết bài mới
           </a>
           <form method="POST" action="{% url 'logout' %}" class="inline-form">
             {% csrf_token %}

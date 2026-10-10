@@ -8,18 +8,27 @@
   <div class="field">
     <label for="id_content">Bạn muốn chia sẻ điều gì?</label>
     <p class="field-hint">Bảng tin hiện khoảng 300 ký tự đầu, nên hãy mở bài bằng điều bạn muốn nói nhất.</p>
-    <textarea name="content" id="id_content" rows="12" required autofocus
+    <textarea name="content" id="id_content" rows="6" required autofocus
               placeholder="Kể lại một khoảnh khắc, một suy nghĩ, một góc nhìn…">{{ form.content.value|default:'' }}</textarea>
     {% for error in form.content.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
   </div>
 
   <div class="field">
     <label for="id_image">Ảnh minh họa <span class="optional">(không bắt buộc)</span></label>
-    {% if post.image %}
-      <img src="{{ post.image.url }}" alt="Ảnh hiện tại" class="current-image" />
-      <p class="field-hint">Chọn ảnh mới để thay ảnh này.</p>
-    {% endif %}
-    <input type="file" name="image" id="id_image" accept="image/*" />
+
+    {# Xem trước: khi sửa bài thì hiện ảnh đang có; chọn ảnh mới thì đổi sang ảnh mới (chưa lưu) #}
+    <figure class="image-preview" id="image-preview"
+            data-original="{% if post.image %}{{ post.image.url }}{% endif %}"
+            {% if not post.image %}hidden{% endif %}>
+      <img id="image-preview-img" src="{% if post.image %}{{ post.image.url }}{% endif %}" alt="Xem trước ảnh sẽ đăng" />
+      <figcaption id="image-preview-caption">Ảnh hiện tại. Chọn ảnh khác để thay.</figcaption>
+    </figure>
+
+    <div class="image-picker">
+      <input type="file" name="image" id="id_image" accept="image/*" />
+      <button type="button" class="btn btn-secondary btn-small" id="image-clear" hidden>Bỏ ảnh</button>
+    </div>
+    <p class="field-error" id="image-error" hidden>Tệp này không phải ảnh. Hãy chọn tệp JPG, PNG, GIF hoặc WEBP.</p>
     {% for error in form.image.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
   </div>
 
@@ -43,3 +52,55 @@
     <a href="{% if post %}{% url 'post_detail' post.id %}{% else %}{% url 'home' %}{% endif %}" class="btn btn-secondary">Hủy</a>
   </div>
 </form>
+
+<script>
+  // Xem trước ảnh trước khi đăng (ảnh chỉ đọc trong trình duyệt, chưa gửi lên server)
+  (function () {
+    const input = document.getElementById('id_image');
+    const box = document.getElementById('image-preview');
+    const img = document.getElementById('image-preview-img');
+    const caption = document.getElementById('image-preview-caption');
+    const clearBtn = document.getElementById('image-clear');
+    const error = document.getElementById('image-error');
+    const original = box.dataset.original;   // ảnh đang có (khi sửa bài), rỗng khi đăng mới
+    let objectUrl = null;
+
+    function showOriginal() {
+      if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+      clearBtn.hidden = true;
+      if (original) {
+        img.src = original;
+        caption.textContent = 'Ảnh hiện tại. Chọn ảnh khác để thay.';
+        box.hidden = false;
+      } else {
+        img.removeAttribute('src');
+        box.hidden = true;
+      }
+    }
+
+    input.addEventListener('change', function () {
+      const file = input.files[0];
+      error.hidden = true;
+      if (!file) { showOriginal(); return; }
+      if (!file.type.startsWith('image/')) {
+        input.value = '';
+        showOriginal();
+        error.hidden = false;
+        return;
+      }
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+      caption.textContent = original ? 'Ảnh mới (sẽ thay ảnh hiện tại khi lưu).' : 'Ảnh sẽ đăng kèm bài.';
+      box.hidden = false;
+      clearBtn.hidden = false;
+    });
+
+    clearBtn.addEventListener('click', function () {
+      input.value = '';
+      error.hidden = true;
+      showOriginal();
+      input.focus();
+    });
+  })();
+</script>

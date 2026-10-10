@@ -69,13 +69,10 @@ def render_feed(request, posts, extra):
     })
 
 
-def featured_quote(posts=None):
-    # Câu đầu (tối đa 120 ký tự) của bài được thích nhiều nhất, hòa thì lấy bài mới hơn.
+def featured_quote(posts):
+    # "Góc nhìn được thích nhất" ở trang cá nhân (posts = bài của một người):
+    # câu đầu (tối đa 120 ký tự) của bài được thích nhiều nhất, hòa thì lấy bài mới hơn.
     # Bỏ qua câu quá ngắn (vd "hehe") vì không ra "góc nhìn"; chỉ xét 20 bài đứng đầu.
-    # Landing: xét mọi bài (ngoại lệ có chủ đích của luật "chỉ thành viên xem bài").
-    # Trang cá nhân: truyền vào bài của một người.
-    if posts is None:
-        posts = Post.objects.all()
     top = (posts.select_related('author')
            .annotate(n_likes=Count('likes'))
            .order_by('-n_likes', '-created_at')[:20])
@@ -95,12 +92,7 @@ def featured_quote(posts=None):
 def home(request):
     # Chưa đăng nhập thì luôn thấy trang landing (bài viết chỉ dành cho thành viên)
     if not request.user.is_authenticated:
-        return render(request, 'devBlog/landing.html', {
-            'post_count': Post.objects.count(),
-            'member_count': User.objects.count(),
-            'tag_count': Tag.objects.count(),
-            'quote': featured_quote(),
-        })
+        return render(request, 'devBlog/landing.html')
 
     query = request.GET.get('q', '').strip()
 

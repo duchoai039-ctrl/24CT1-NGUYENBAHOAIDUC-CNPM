@@ -35,7 +35,7 @@
       {% endfor %}
     </div>
 
-    {% include 'devBlog/_navbar.html' %}
+    {% block navbar %}{% include 'devBlog/_navbar.html' %}{% endblock %}
     {% block hero %}{% endblock %}
     <main id="main" class="container">
         {% block content %}{% endblock %}

@@ -5,7 +5,8 @@
 
 {% block content %}
 <article class="article">
-  {# Thứ tự: tác giả + thời gian (cùng hàng) -> nội dung -> chủ đề -> hình ảnh #}
+  {# Tấm 1 — bài viết. Thứ tự: tác giả + thời gian (cùng hàng) -> nội dung -> chủ đề -> hình ảnh -> thích #}
+  <div class="article-body">
   <div class="post-byline post-byline-large">
     <a href="{% url 'user_profile' post.author.username %}" class="byline-person">
       <span class="byline-avatar" aria-hidden="true">{{ post.author.username|first|upper }}</span>
@@ -47,7 +48,9 @@
       </div>
     {% endif %}
   </footer>
+  </div>
 
+  {# Tấm 2 — bình luận #}
   <section class="comments" id="binh-luan" aria-labelledby="comments-heading">
     <h2 id="comments-heading">Bình luận ({{ comments|length }})</h2>
 
