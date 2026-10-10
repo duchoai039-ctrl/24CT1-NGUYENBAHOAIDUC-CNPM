@@ -1,4 +1,5 @@
 {% extends 'devBlog/base.html' %}
+{% load perspect %}
 
 {% block title %}{% if current_tag %}{{ current_tag.name }} - {% endif %}Perspect{% endblock %}
 
@@ -8,7 +9,7 @@
     <header class="feed-header">
       {% if query %}
         <h1 id="feed-heading">Kết quả cho “{{ query }}”</h1>
-        <p class="feed-subtitle">{{ posts.paginator.count }} bài viết. <a href="{% url 'home' %}">Xem tất cả bài</a></p>
+        <p class="feed-subtitle">{{ posts.paginator.count }} bài viết{% if current_tag %} trong chủ đề {{ current_tag.name }}{% endif %}. <a href="{% url 'home' %}">Xem tất cả bài</a></p>
       {% elif current_tag %}
         <h1 id="feed-heading">{{ current_tag.name }}</h1>
         <p class="feed-subtitle">{{ posts.paginator.count }} bài viết trong chủ đề này. <a href="{% url 'home' %}">Xem tất cả bài</a></p>
@@ -17,6 +18,15 @@
         <p class="feed-subtitle">Những góc nhìn mọi người vừa chia sẻ.</p>
       {% endif %}
     </header>
+
+    {# Chỗ viết bài: trông như ô nhập, bấm vào mở trang viết bài #}
+    {% if not query %}
+      <a href="{% url 'create_post' %}" class="composer" aria-label="Viết bài">
+        <span class="byline-avatar {{ user|tong }}" aria-hidden="true">{{ user|chu_dau }}</span>
+        <span class="composer-prompt">Kể điều bạn thấy hôm nay…</span>
+        <span class="btn btn-small" aria-hidden="true"><i class="fa-solid fa-pen"></i> Viết bài</span>
+      </a>
+    {% endif %}
 
     {% if not query and not current_tag and posts.number == 1 %}
       {% include 'devBlog/_suggest_strip.html' %}
@@ -41,11 +51,11 @@
     {% if posts.has_other_pages %}
       <nav class="pagination" aria-label="Chuyển trang">
         {% if posts.has_previous %}
-          <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}page={{ posts.previous_page_number }}">Trang trước</a>
+          <a href="?{% if query %}q={{ query|urlencode }}&{% if current_tag %}tag={{ current_tag.id }}&{% endif %}{% endif %}page={{ posts.previous_page_number }}">Trang trước</a>
         {% else %}<span></span>{% endif %}
         <span class="pagination-current">Trang {{ posts.number }} / {{ posts.paginator.num_pages }}</span>
         {% if posts.has_next %}
-          <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}page={{ posts.next_page_number }}">Trang sau</a>
+          <a href="?{% if query %}q={{ query|urlencode }}&{% if current_tag %}tag={{ current_tag.id }}&{% endif %}{% endif %}page={{ posts.next_page_number }}">Trang sau</a>
         {% else %}<span></span>{% endif %}
       </nav>
     {% endif %}

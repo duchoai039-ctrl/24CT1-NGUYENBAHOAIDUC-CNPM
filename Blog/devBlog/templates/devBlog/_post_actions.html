@@ -6,7 +6,7 @@
             aria-pressed="{% if post.is_liked %}true{% else %}false{% endif %}"
             title="{% if post.is_liked %}Bỏ thích{% else %}Thích{% endif %}">
       <i class="fa-{% if post.is_liked %}solid{% else %}regular{% endif %} fa-heart" aria-hidden="true"></i>
-      <span><span class="like-count">{{ post.n_likes }}</span><span class="visually-hidden"> lượt thích</span></span>
+      <span><span class="visually-hidden">Thích, </span><span class="like-count">{{ post.n_likes }}</span><span class="visually-hidden"> lượt thích</span></span>
     </button>
   </form>
   <a href="{% url 'post_detail' post.id %}#binh-luan" class="comment-count" title="Bình luận">

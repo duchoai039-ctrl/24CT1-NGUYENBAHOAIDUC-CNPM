@@ -6,13 +6,13 @@
 <div class="auth">
   <h1 class="page-title">Đăng nhập</h1>
   {% if error %}
-    <p class="form-error" role="alert">{{ error }}</p>
+    <p class="form-error" role="alert" id="login-error">{{ error }}</p>
   {% endif %}
   <form method="POST" class="stack-form">
     {% csrf_token %}
     <div class="field">
       <label for="ident">Gmail hoặc số điện thoại</label>
-      <input type="text" name="ident" id="ident" value="{{ ident|default:'' }}" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+      <input type="text" name="ident" id="ident" value="{{ ident|default:'' }}" autocomplete="username" autocapitalize="none" spellcheck="false" required{% if error %} aria-invalid="true" aria-describedby="login-error"{% endif %} />
     </div>
     <div class="field">
       <label for="password">Mật khẩu</label>

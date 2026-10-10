@@ -1,0 +1,16 @@
+{# Ô tìm kiếm (dùng ở thanh trên và menu trái). Đang xem một chủ đề thì chỉ tìm trong chủ đề đó #}
+<form method="GET" action="{% url 'home' %}" class="navbar-search-form" role="search">
+  <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+  </svg>
+  {% if current_tag %}<input type="hidden" name="tag" value="{{ current_tag.id }}" />{% endif %}
+  <input type="search" name="q" placeholder="{% if current_tag %}Tìm trong chủ đề này{% else %}Tìm bài, tác giả{% endif %}" aria-label="Tìm kiếm" value="{{ query|default:'' }}" autocomplete="off" />
+  {% if query %}
+    <a href="{% url 'home' %}" class="search-clear-btn" title="Xóa tìm kiếm" aria-label="Xóa tìm kiếm">&times;</a>
+  {% endif %}
+</form>
+{% if current_tag %}
+  {# Bấm để tìm trên toàn bộ bài (giữ từ khóa) #}
+  <a href="{% url 'home' %}{% if query %}?q={{ query|urlencode }}{% endif %}" class="search-scope"
+     title="Tìm trên toàn bộ bài" aria-label="Bỏ lọc chủ đề {{ current_tag.name }}">trong {{ current_tag.name }} <span aria-hidden="true">&times;</span></a>
+{% endif %}

@@ -9,14 +9,17 @@
   <div class="article-body">
   <div class="post-byline post-byline-large">
     <a href="{% url 'user_profile' post.author.id %}" class="byline-person">
-      <span class="byline-avatar" aria-hidden="true">{{ post.author|chu_dau }}</span>
+      <span class="byline-avatar {{ post.author|tong }}" aria-hidden="true">{{ post.author|chu_dau }}</span>
       <span class="post-author">{{ post.author|ten }}</span>
     </a>
     <time class="post-time" datetime="{{ post.created_at|date:'c' }}" title="{{ post.created_at|ngay_gio }}">{{ post.created_at|thoi_gian }}</time>
   </div>
 
   <h1 class="visually-hidden">Bài viết của {{ post.author|ten }}</h1>
-  <div class="prose">{{ post.content|linebreaks }}</div>
+  <div class="prose">
+    <p class="post-lead">{{ post.lead }}</p>
+    {{ post.rest|linebreaks }}
+  </div>
 
   {% if post.tags.all %}
     <div class="post-meta">
@@ -65,6 +68,7 @@
     {% for comment in comments %}
       <div class="comment">
         <p class="comment-meta">
+          <span class="byline-avatar {{ comment.author|tong }}" aria-hidden="true">{{ comment.author|chu_dau }}</span>
           <a href="{% url 'user_profile' comment.author.id %}" class="post-author">{{ comment.author|ten }}</a>
           <time datetime="{{ comment.created_at|date:'c' }}" title="{{ comment.created_at|ngay_gio }}">{{ comment.created_at|thoi_gian }}</time>
         </p>

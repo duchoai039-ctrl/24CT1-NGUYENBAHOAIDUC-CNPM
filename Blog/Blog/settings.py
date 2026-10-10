@@ -51,6 +51,9 @@ ALLOWED_HOSTS = [
     '.loca.lt',
 ]
 
+# Mã CSRF cũ (đăng nhập lại ở tab khác, bấm Back sau khi đăng nhập): báo nhẹ nhàng thay trang 403
+CSRF_FAILURE_VIEW = 'devBlog.views.csrf_failure'
+
 CSRF_TRUSTED_ORIGINS = [
     'https://*.pinggy.link',
     'https://*.pinggy.net',

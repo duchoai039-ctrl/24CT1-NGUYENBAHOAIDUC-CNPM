@@ -10,7 +10,7 @@
        style="--seed-x: {% widthratio profile_user.id 1 53 %}px; --seed-y: {% widthratio profile_user.id 1 29 %}px;"></div>
 
   <header class="profile-header">
-    <div class="profile-avatar" aria-hidden="true">{{ profile_user|chu_dau }}</div>
+    <div class="profile-avatar {{ profile_user|tong }}" aria-hidden="true">{{ profile_user|chu_dau }}</div>
 
     <div class="profile-identity">
       <h1 class="profile-name">{{ profile_user|ten }}</h1>
@@ -24,13 +24,13 @@
 
     <div class="profile-actions">
       {% if is_own_profile %}
-        <a href="{% url 'create_post' %}" class="btn"><i class="fa-solid fa-pen" aria-hidden="true"></i> Viết bài</a>
+        <a href="{% url 'complete_profile' %}" class="btn btn-secondary"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> Sửa thông tin</a>
       {% else %}
         <form method="POST" action="{% url 'toggle_follow' profile_user.id %}" class="inline-form follow-form">
           {% csrf_token %}
           {# Một nút, ba nhãn; CSS chọn nhãn theo trạng thái .is-following và khi rê chuột #}
           <button type="submit" class="btn follow-btn{% if is_following %} is-following{% endif %}"
-                  aria-pressed="{{ is_following|yesno:'true,false' }}">
+                  aria-pressed="{{ is_following|yesno:'true,false' }}" aria-label="Theo dõi {{ profile_user|ten }}">
             <span class="follow-label-off">Theo dõi</span>
             <span class="follow-label-on"><i class="fa-solid fa-check" aria-hidden="true"></i> Đang theo dõi</span>
             <span class="follow-label-hover">Bỏ theo dõi</span>
@@ -51,7 +51,7 @@
   <figure class="profile-quote">
     <figcaption class="profile-quote-label">Góc nhìn được thích nhất</figcaption>
     <blockquote>
-      <a href="{% url 'post_detail' top_quote.post_id %}">“{{ top_quote.text }}”</a>
+      <a href="{% url 'post_detail' top_quote.post_id %}">{{ top_quote.text }}</a>
     </blockquote>
     <p class="profile-quote-source">{{ top_quote.created_at|dang_luc }}, {{ top_quote.likes }} lượt thích</p>
   </figure>

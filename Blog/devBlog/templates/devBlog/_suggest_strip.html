@@ -8,7 +8,7 @@
     {% for u in following_users %}
       <li>
         <a href="{% url 'user_profile' u.id %}" class="follow-row-person">
-          <span class="follow-row-avatar{% if u.posted_recently %} has-new{% endif %}" aria-hidden="true">{{ u|chu_dau }}</span>
+          <span class="follow-row-avatar{% if u.posted_recently %} has-new{% endif %} {{ u|tong }}" aria-hidden="true">{{ u|chu_dau }}</span>
           <span class="follow-row-name">{{ u|ten }}{% if u.posted_recently %}<span class="visually-hidden"> (có bài mới)</span>{% endif %}</span>
         </a>
       </li>
@@ -24,7 +24,7 @@
     {% for u in people_you_may_know %}
       <li class="suggest-card">
         <a href="{% url 'user_profile' u.id %}" class="suggest-card-person">
-          <span class="suggest-card-avatar" aria-hidden="true">{{ u|chu_dau }}</span>
+          <span class="suggest-card-avatar {{ u|tong }}" aria-hidden="true">{{ u|chu_dau }}</span>
           <span class="suggest-card-name">{{ u|ten }}</span>
           <span class="following-meta">
             {% if u.follows_me %}Đang theo dõi bạn
@@ -36,8 +36,8 @@
         </a>
         <form method="POST" action="{% url 'toggle_follow' u.id %}" class="inline-form follow-form">
           {% csrf_token %}
-          <button type="submit" class="btn btn-small follow-btn follow-btn-compact" aria-pressed="false">
-            <span class="follow-label-off">Theo dõi<span class="visually-hidden"> {{ u|ten }}</span></span>
+          <button type="submit" class="btn btn-small follow-btn follow-btn-compact" aria-pressed="false" aria-label="Theo dõi {{ u|ten }}">
+            <span class="follow-label-off">Theo dõi</span>
             <span class="follow-label-on"><i class="fa-solid fa-check" aria-hidden="true"></i> Đã theo dõi</span>
             <span class="follow-label-hover">Bỏ theo dõi</span>
           </button>

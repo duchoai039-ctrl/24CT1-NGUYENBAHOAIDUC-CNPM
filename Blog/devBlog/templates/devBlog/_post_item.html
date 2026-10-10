@@ -1,6 +1,6 @@
 {% load perspect %}
 {% comment %}
-  Một bài trong bảng tin (trang chủ, trang chủ đề, trang cá nhân, bài của tôi).
+  Một bài trong bảng tin (trang chủ, trang chủ đề, trang cá nhân).
   Cần post có n_likes, n_comments, is_liked (xem posts_with_stats trong views.py).
   Tùy chọn: hide_author=True (trang cá nhân), show_owner_actions=True (nút sửa/xóa).
   Thứ tự: tác giả -> nội dung -> thời gian -> hình ảnh (nếu có) -> thích/bình luận.
@@ -10,7 +10,7 @@
     {# Tác giả và thời gian đăng nằm cùng một hàng #}
     <div class="post-byline">
       <a href="{% url 'user_profile' post.author.id %}" class="byline-person">
-        <span class="byline-avatar" aria-hidden="true">{{ post.author|chu_dau }}</span>
+        <span class="byline-avatar {{ post.author|tong }}" aria-hidden="true">{{ post.author|chu_dau }}</span>
         <span class="post-author">{{ post.author|ten }}</span>
       </a>
       <time class="post-time" datetime="{{ post.created_at|date:'c' }}" title="{{ post.created_at|ngay_gio }}">{{ post.created_at|thoi_gian }}</time>
@@ -18,7 +18,8 @@
   {% endif %}
 
   <div class="post-item-content">
-    {{ post.excerpt|linebreaksbr }}
+    <p class="post-lead">{{ post.lead|truncatechars:300 }}</p>
+    {% if post.excerpt_rest %}<p>{{ post.excerpt_rest|linebreaksbr }}</p>{% endif %}
     {% if post.has_more %}
       <a href="{% url 'post_detail' post.id %}" class="read-more">Đọc tiếp</a>
     {% endif %}
@@ -27,7 +28,7 @@
   {% if hide_author or post.tags.all %}
     <div class="post-meta">
       {% if hide_author %}
-        {# Trang cá nhân / bài của tôi không có hàng tác giả, nên thời gian hiện ở đây #}
+        {# Trang cá nhân không có hàng tác giả, nên thời gian hiện ở đây #}
         <time class="post-time" datetime="{{ post.created_at|date:'c' }}" title="{{ post.created_at|ngay_gio }}">{{ post.created_at|thoi_gian }}</time>
       {% endif %}
       {% for tag in post.tags.all %}
