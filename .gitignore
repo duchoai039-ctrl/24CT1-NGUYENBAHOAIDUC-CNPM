@@ -7,3 +7,7 @@ __pycache__/
 Blog/media/
 # File static gom lại khi chạy collectstatic
 Blog/staticfiles/
+
+# Dữ liệu xuất ra để chuyển sang Neon (có mật khẩu đã mã hóa của người dùng) và chuỗi kết nối bí mật
+du_lieu*.json
+.env

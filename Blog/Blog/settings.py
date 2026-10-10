@@ -13,29 +13,39 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Render tự đặt biến RENDER cho mọi dịch vụ chạy trên nó.
+# Trên máy mình: SQLite, DEBUG bật, ảnh lưu ở media/ — như cũ.
+# Trên Render: DEBUG tắt, bắt buộc SECRET_KEY riêng, HTTPS, PostgreSQL (Neon), ảnh trên Cloudinary.
+ON_RENDER = 'RENDER' in os.environ
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# Khóa bí mật lấy từ biến môi trường, có fallback an toàn cho môi trường dev cục bộ
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-23zsldztjtt6=_^izmw^)!pzr#i_2l%z#vtq+j*@*ge6=(yhtr'
-)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if ON_RENDER:
+        # Không bao giờ chạy web thật bằng khóa cũ (đã lộ trên GitHub)
+        raise ImproperlyConfigured('Chua dat bien moi truong DJANGO_SECRET_KEY tren Render.')
+    # Chỉ dùng cho máy cá nhân
+    SECRET_KEY = 'django-insecure-23zsldztjtt6=_^izmw^)!pzr#i_2l%z#vtq+j*@*ge6=(yhtr'
 
-# Bật debug cho dev cục bộ (có thể tắt bằng DJANGO_DEBUG=0)
-DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
+# Máy mình: bật debug (tắt bằng DJANGO_DEBUG=0). Render: tắt (bật bằng DJANGO_DEBUG=1 khi cần soi lỗi)
+DEBUG = os.environ.get('DJANGO_DEBUG', '0' if ON_RENDER else '1') == '1'
 
 # Chỉ nhận máy mình và các tên miền tunnel đang dùng (dấu chấm đầu = mọi subdomain)
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '.pinggy.link',
+    '.pinggy.net',          # tên miền mới của pinggy: *.free.pinggy.net
+    '.pinggy-free.link',    # và *.run.pinggy-free.link
     '.localhost.run',
     '.ngrok-free.app',
     '.loca.lt',
@@ -43,12 +53,29 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.pinggy.link',
+    'https://*.pinggy.net',
+    'https://*.pinggy-free.link',
     'https://*.localhost.run',
     'https://*.ngrok-free.app',
     'https://*.loca.lt',
     'http://*.pinggy.link',
     'http://*.localhost.run',
 ]
+
+# Tên miền Render cấp (vd perspect.onrender.com) — Render tự đặt biến này
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+
+if ON_RENDER:
+    # Render nhận HTTPS rồi chuyển vào app qua HTTP nội bộ: tin header của proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 3600   # để thấp lúc đầu; ổn định rồi mới tăng
+    SECURE_CONTENT_TYPE_NOSNIFF = True
 
 
 # Application definition
@@ -65,6 +92,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',   # phục vụ CSS, phông, video (ngay sau Security)
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -97,11 +125,13 @@ WSGI_APPLICATION = 'Blog.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# Có DATABASE_URL (chuỗi kết nối PostgreSQL của Neon) thì dùng nó, không có thì dùng SQLite trên máy
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,          # giữ kết nối lại 10 phút, đỡ phải nối lại Neon mỗi lần
+        conn_health_checks=True,   # Neon tự ngủ khi rảnh: kiểm tra kết nối còn sống trước khi dùng
+    )
 }
 
 
@@ -140,7 +170,25 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles'   # collectstatic gom file vào đây khi deploy
+
+# Ảnh người dùng tải lên: có CLOUDINARY_URL thì lưu lên Cloudinary
+# (ổ đĩa Render bị xóa mỗi lần deploy lại), không có thì lưu ở media/ trên máy.
+USE_CLOUDINARY = bool(os.environ.get('CLOUDINARY_URL'))
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage' if USE_CLOUDINARY
+                   else 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        # Nén gzip/brotli sẵn; không đổi tên file theo hash nên không cần chạy collectstatic khi test
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
+
+# Trên máy (chưa collectstatic) WhiteNoise đọc thẳng từ thư mục static của app
+WHITENOISE_USE_FINDERS = not ON_RENDER
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 

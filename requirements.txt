@@ -1,2 +1,10 @@
 Django==5.2.18
 pillow==12.3.0
+
+# Deploy (Render + Neon + Cloudinary)
+gunicorn==26.2.0              # máy chủ chạy web trên Render (chỉ chạy được trên Linux)
+psycopg[binary]==3.3.6        # kết nối PostgreSQL (Neon)
+dj-database-url==3.1.2        # đọc chuỗi kết nối từ biến DATABASE_URL
+whitenoise==6.12.0            # phục vụ CSS, phông, video
+cloudinary==1.46.3            # lưu ảnh người dùng tải lên
+django-cloudinary-storage==0.3.0

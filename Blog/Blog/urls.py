@@ -17,14 +17,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, re_path, include
 from django.conf import settings
-from django.contrib.staticfiles.views import serve as serve_static
 from django.views.static import serve as serve_media
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('devBlog.urls')),
-    # shortcut: Django tự phục vụ CSS và ảnh upload kể cả khi DEBUG tắt.
-    # Đủ cho chạy runserver + tunnel với ít người dùng; deploy thật thì dùng whitenoise hoặc nginx.
-    re_path(r'^static/(?P<path>.*)$', serve_static, {'insecure': True}),
-    re_path(r'^media/(?P<path>.*)$', serve_media, {'document_root': settings.MEDIA_ROOT}),
 ]
+
+# CSS/phông/video do WhiteNoise phục vụ (xem MIDDLEWARE).
+# Ảnh upload: trên Render nằm ở Cloudinary (link thẳng tới Cloudinary);
+# trên máy nằm ở media/ nên Django tự phục vụ, kể cả khi DEBUG tắt (chạy thử qua tunnel).
+if not settings.USE_CLOUDINARY:
+    urlpatterns.append(
+        re_path(r'^media/(?P<path>.*)$', serve_media, {'document_root': settings.MEDIA_ROOT}),
+    )

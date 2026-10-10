@@ -1,0 +1,18 @@
+# Cấu hình deploy trên Render (Blueprint). Render đọc file này khi bạn tạo "New > Blueprint" từ repo.
+services:
+  - type: web
+    name: perspect
+    runtime: python
+    plan: free
+    region: singapore            # gần Việt Nam; đặt Neon cũng ở Singapore cho nhanh
+    buildCommand: bash build.sh
+    startCommand: cd Blog && gunicorn Blog.wsgi:application
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true      # Render tự tạo khóa ngẫu nhiên, không ai cần biết
+      - key: DATABASE_URL
+        sync: false              # bạn tự dán chuỗi kết nối Neon vào trang Render (không để trong code)
+      - key: CLOUDINARY_URL
+        sync: false              # bạn tự dán chuỗi kết nối Cloudinary vào trang Render
+      - key: WEB_CONCURRENCY
+        value: 2                 # số tiến trình gunicorn, vừa với gói miễn phí
