@@ -2,9 +2,21 @@ from django import template
 from django.utils import timezone
 
 # pyrefly: ignore [missing-import]
-from devBlog.models import display_name
+from devBlog.models import Tag, display_name
 
 register = template.Library()
+
+
+@register.simple_tag
+def chu_de():
+    """Tất cả chủ đề, cho menu trái: {% chu_de as nav_tags %}."""
+    return Tag.objects.all()
+
+
+@register.simple_tag
+def so_thong_bao(user):
+    """Số thông báo chưa đọc cho cái chuông: {% so_thong_bao user as unread %}."""
+    return user.notifications.filter(read=False).count() if user.is_authenticated else 0
 
 
 @register.filter
@@ -17,6 +29,12 @@ def ten(user):
 def chu_dau(user):
     """Chữ trên avatar: chữ đầu của Tên ("Đức" -> "Đ")."""
     return (user.first_name or display_name(user))[:1].upper() if user else ''
+
+
+@register.filter
+def tong(user):
+    """Tông màu sơn mài của avatar, cố định theo mã số người dùng (son / vàng / cánh gián / rêu)."""
+    return f'tone-{user.id % 4}' if user and user.id else ''
 
 
 @register.filter

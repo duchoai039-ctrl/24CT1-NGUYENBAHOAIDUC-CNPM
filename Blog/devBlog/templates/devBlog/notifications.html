@@ -1,0 +1,28 @@
+{% extends 'devBlog/base.html' %}
+{% load perspect %}
+
+{% block title %}Thông báo - Perspect{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+  <h1 class="page-title">Thông báo</h1>
+  {% if items %}
+    <ul class="notif-list">
+      {% for n in items %}
+        <li>
+          <a class="notif-item{% if not n.read %} is-unread{% endif %}"
+             href="{% if n.post %}{% url 'post_detail' n.post.id %}{% if n.kind == 'comment' %}#binh-luan{% endif %}{% else %}{% url 'user_profile' n.actor.id %}{% endif %}">
+            <span class="byline-avatar {{ n.actor|tong }}" aria-hidden="true">{{ n.actor|chu_dau }}</span>
+            <span class="notif-text">
+              <strong>{{ n.actor|ten }}</strong> {{ n.get_kind_display }}{% if n.post %}: <span class="notif-post">{{ n.post.title }}</span>{% endif %}
+              <time datetime="{{ n.created_at|date:'c' }}" title="{{ n.created_at|ngay_gio }}">{{ n.created_at|thoi_gian }}</time>
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="lead">Chưa có gì mới. Khi có người bình luận, thích bài hay theo dõi bạn, hoặc người bạn theo dõi đăng bài, bạn sẽ thấy ở đây.</p>
+  {% endif %}
+</div>
+{% endblock %}

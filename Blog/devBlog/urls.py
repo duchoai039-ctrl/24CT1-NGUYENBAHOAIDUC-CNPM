@@ -19,6 +19,8 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('profile/<int:user_id>/', views.user_profile, name='user_profile'),
     path('profile/<int:user_id>/follow/', views.toggle_follow, name='toggle_follow'),
-    path('my-posts/', views.my_posts, name='my_posts'),
+    path('tim-kiem/', views.explore, name='explore'),
+    path('thong-bao/', views.notifications, name='notifications'),
+    path('thong-bao/so/', views.notification_count, name='notification_count'),
     path('tag/<int:tag_id>/', views.posts_by_tag, name='posts_by_tag'),
 ]

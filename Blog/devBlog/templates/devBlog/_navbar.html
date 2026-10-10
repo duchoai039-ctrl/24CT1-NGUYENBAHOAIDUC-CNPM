@@ -7,26 +7,10 @@
       </svg>
       <span class="logo-text">Perspect</span>
     </a>
-    {% if user.is_authenticated %}
-      {# Không cần "Trang chủ": bấm logo Perspect đã về trang chủ #}
-      <nav class="nav-links">
-        <a href="{% url 'create_post' %}"><i class="fa-solid fa-pen" aria-hidden="true"></i><span class="nav-label">Viết bài</span></a>
-      </nav>
-    {% endif %}
   </div>
 
   {% if user.is_authenticated %}
-  <div class="navbar-center">
-    <form method="GET" action="{% url 'home' %}" class="navbar-search-form">
-      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-      </svg>
-      <input type="search" name="q" placeholder="Tìm bài, tác giả, chủ đề" aria-label="Tìm kiếm" value="{{ query|default:'' }}" autocomplete="off" />
-      {% if query %}
-        <a href="{% url 'home' %}" class="search-clear-btn" title="Xóa tìm kiếm" aria-label="Xóa tìm kiếm">&times;</a>
-      {% endif %}
-    </form>
-  </div>
+  <div class="navbar-center">{% include 'devBlog/_search_form.html' %}</div>
   {% endif %}
 
   <div class="navbar-right">
@@ -37,10 +21,16 @@
     </button>
 
     {% if user.is_authenticated %}
+      {% so_thong_bao user as unread %}
+      <a href="{% url 'notifications' %}" class="nav-bell">
+        <span class="visually-hidden">Thông báo</span>
+        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+        <span class="notif-count"{% if not unread %} hidden{% endif %}><span class="notif-num">{{ unread }}</span><span class="visually-hidden"> chưa đọc</span></span>
+      </a>
       {# Menu người dùng: máy tính rê chuột là mở; điện thoại/bàn phím bấm nút để mở (JS trong base.html) #}
       <div class="user-dropdown-wrapper">
         <button type="button" class="user-pill-btn" aria-expanded="false" aria-controls="user-menu">
-          <span class="user-mini-avatar" aria-hidden="true">{{ user|chu_dau }}</span>
+          <span class="user-mini-avatar {{ user|tong }}" aria-hidden="true">{{ user|chu_dau }}</span>
           <span class="user-name-text">{{ user|ten }}</span>
           <i class="fa-solid fa-chevron-down dropdown-arrow" aria-hidden="true"></i>
         </button>
@@ -52,6 +42,9 @@
           <hr class="dropdown-divider" />
           <a href="{% url 'profile' %}" class="dropdown-item">
             <i class="fa-solid fa-user" aria-hidden="true"></i> Trang cá nhân
+          </a>
+          <a href="{% url 'complete_profile' %}" class="dropdown-item">
+            <i class="fa-solid fa-user-pen" aria-hidden="true"></i> Sửa thông tin
           </a>
           {# Điện thoại: nút sáng/tối ở thanh trên bị ẩn cho ô tìm kiếm rộng ra, nên đặt vào đây #}
           <button type="button" class="dropdown-item theme-menu-item" onclick="toggleTheme()">

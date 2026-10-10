@@ -1,0 +1,20 @@
+{% extends 'devBlog/base.html' %}
+{% load perspect %}
+
+{% block title %}Tìm kiếm - Perspect{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+  <h1 class="page-title">Tìm kiếm</h1>
+  <div class="explore-search">{% include 'devBlog/_search_form.html' %}</div>
+  {% chu_de as nav_tags %}
+  {% if nav_tags %}
+    <h2 class="explore-heading">Chủ đề</h2>
+    <ul class="explore-topics">
+      {% for tag in nav_tags %}
+        <li><a href="{% url 'posts_by_tag' tag.id %}"><i class="fa-solid fa-hashtag" aria-hidden="true"></i> {{ tag.name }}</a></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}

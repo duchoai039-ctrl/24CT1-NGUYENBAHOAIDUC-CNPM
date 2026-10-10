@@ -1,9 +1,11 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from .forms import normalize_phone
-from .models import Post, UserProfile, Follow, Tag
+from .models import Post, UserProfile, Follow, Tag, Notification
 from .views import people_you_may_know
 
 
@@ -51,9 +53,95 @@ class PostOwnershipTests(TestCase):
         self.assertEqual(self.post.content, 'Nội dung mới. Câu hai.')
         self.assertEqual(self.post.title, 'Nội dung mới.')   # tiêu đề tự lấy từ câu đầu
 
-        response = self.client.post(self.delete_url)
+        response = self.client.post(self.delete_url, follow=True)
         self.assertRedirects(response, reverse('home'))
+        self.assertContains(response, 'Đã xóa bài.')
         self.assertFalse(Post.objects.filter(id=self.post.id).exists())
+
+    def test_dang_bai_xong_ve_bai_vua_dang(self):
+        self.client.force_login(self.author)
+        response = self.client.post(reverse('create_post'), {'content': 'Bài mới. Câu hai.'}, follow=True)
+        post = Post.objects.latest('id')
+        self.assertRedirects(response, reverse('post_detail', args=[post.id]))
+        self.assertContains(response, 'Đã đăng bài.')
+
+
+class EditInfoTests(TestCase):
+    """Đã có tên thì trang điền tên thành trang "Sửa thông tin", lưu xong về trang cá nhân."""
+
+    def test_sua_thong_tin(self):
+        user = User.objects.create_user('u1', password='Hoa-Sen!2026', first_name='An', last_name='Lê')
+        self.client.force_login(user)
+        self.assertContains(self.client.get(reverse('complete_profile')), 'Sửa thông tin')
+        response = self.client.post(reverse('complete_profile'), {'last_name': 'Lê', 'first_name': 'Bình'}, follow=True)
+        self.assertRedirects(response, reverse('profile'))
+        self.assertContains(response, 'Đã lưu thông tin.')
+        user.refresh_from_db()
+        self.assertEqual(user.first_name, 'Bình')
+
+
+class TopicSearchTests(TestCase):
+    """Đang xem một chủ đề thì tìm kiếm chỉ lấy bài trong chủ đề đó."""
+
+    def test_tim_trong_chu_de(self):
+        user = User.objects.create_user('u1', password='Hoa-Sen!2026', first_name='An', last_name='Lê')
+        travel = Tag.objects.create(name='Du lịch')
+        inside = Post.objects.create(author=user, content='Đà Lạt mùa sương.')
+        inside.tags.add(travel)
+        Post.objects.create(author=user, content='Đà Lạt ngoài chủ đề.')
+        self.client.force_login(user)
+
+        everywhere = self.client.get(reverse('home'), {'q': 'Đà Lạt'})
+        self.assertEqual(everywhere.context['posts'].paginator.count, 2)
+
+        scoped = self.client.get(reverse('home'), {'q': 'Đà Lạt', 'tag': travel.id})
+        self.assertEqual([p.id for p in scoped.context['posts']], [inside.id])
+        self.assertContains(scoped, 'trong Du lịch')
+        self.assertContains(scoped, 'class="side-nav"')   # menu trái có mặt khi đã đăng nhập
+
+        # tag rác thì bỏ qua, không lỗi
+        self.assertEqual(self.client.get(reverse('home'), {'q': 'Đà Lạt', 'tag': 'abc'}).status_code, 200)
+
+
+class CsrfFailureTests(TestCase):
+    """Mã CSRF cũ: đăng xuất vẫn thoát được, form khác vẫn bị chặn (không hiện trang 403)."""
+
+    def setUp(self):
+        self.client = Client(enforce_csrf_checks=True)
+        self.user = User.objects.create_user('u1', password='Hoa-Sen!2026', first_name='An', last_name='Lê')
+        self.client.force_login(self.user)
+
+    def test_dang_xuat_bang_ma_cu(self):
+        response = self.client.post(reverse('logout'), {'csrfmiddlewaretoken': 'cu'})
+        self.assertRedirects(response, reverse('login'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_form_khac_van_bi_chan(self):
+        post = Post.objects.create(author=self.user, content='Bài.')
+        response = self.client.post(reverse('post_detail', args=[post.id]), {'content': 'Lạ', 'csrfmiddlewaretoken': 'cu'},
+                                    HTTP_REFERER='https://web-la.example/')
+        self.assertRedirects(response, reverse('home'), fetch_redirect_response=False)   # không theo Referer ra web lạ
+        self.assertFalse(post.comments.exists())
+
+
+class PostLeadTests(TestCase):
+    """Bảng tin tách câu mở đầu (to hơn) khỏi phần còn lại của đoạn trích."""
+
+    def post(self, content):
+        return Post(content=content)
+
+    def test_tach_cau_mo_dau(self):
+        p = self.post('  Câu mở đầu. Câu hai.\nDòng ba.')
+        self.assertEqual(p.lead, 'Câu mở đầu.')
+        self.assertEqual(p.excerpt_rest, 'Câu hai.\nDòng ba.')
+
+    def test_bai_mot_cau(self):
+        self.assertEqual(self.post('Chỉ một câu').excerpt_rest, '')
+
+    def test_cau_dau_qua_dai(self):
+        p = self.post('a' * 400 + '. Câu hai.')
+        self.assertEqual(p.excerpt_rest, '')
+        self.assertEqual(p.rest, 'Câu hai.')   # trang chi tiết không mất chữ nào
 
 
 class AccountTests(TestCase):
@@ -140,6 +228,7 @@ class PeopleYouMayKnowTests(TestCase):
         UserProfile.objects.create(user=u)
         return u
 
+    @patch('devBlog.views.SUGGESTION_LIMIT', 10)   # giao diện chỉ hiện 3; ở đây xem đủ thứ tự xếp hạng
     def test_thu_tu_goi_y(self):
         me, ban, theo_doi_toi, ban_chung, cung_chu_de, viet_nhieu, dang_ky_do, tai_khoan_cu = (
             self.make(n) for n in ('me', 'ban', 'theodoitoi', 'banchung', 'cungchude', 'vietnhieu',
@@ -156,3 +245,53 @@ class PeopleYouMayKnowTests(TestCase):
         # Vừa đăng ký dở (mã ẩn, chưa tên) thì không gợi ý; tài khoản cũ chưa tên vẫn gợi ý (xếp cuối: chưa có bài)
         names = [u.username for u in people_you_may_know(me)]
         self.assertEqual(names, ['theodoitoi', 'banchung', 'cungchude', 'vietnhieu', 'taikhoancu'])
+
+
+class NotificationTests(TestCase):
+    """Chuông: bình luận, thích, theo dõi, bài mới của người mình theo dõi."""
+
+    def setUp(self):
+        self.an = User.objects.create_user('an', password='x', first_name='An', last_name='Lê')
+        self.binh = User.objects.create_user('binh', password='x', first_name='Bình', last_name='Trần')
+        self.post = Post.objects.create(content='Bài của An.', author=self.an)
+        self.client.force_login(self.binh)
+
+    def kinds(self, user):
+        return sorted(user.notifications.values_list('kind', flat=True))
+
+    def test_binh_luan_thich_theo_doi_bao_cho_chu(self):
+        self.client.post(reverse('post_detail', args=[self.post.id]), {'content': 'Hay quá'})
+        self.client.post(reverse('like_post', args=[self.post.id]))
+        self.client.post(reverse('toggle_follow', args=[self.an.id]))
+        self.assertEqual(self.kinds(self.an), ['comment', 'follow', 'like'])
+
+    def test_bo_thich_bo_theo_doi_rut_thong_bao(self):
+        for _ in range(2):
+            self.client.post(reverse('like_post', args=[self.post.id]))
+            self.client.post(reverse('toggle_follow', args=[self.an.id]))
+        self.assertEqual(self.kinds(self.an), [])
+
+    def test_bai_moi_bao_cho_nguoi_theo_doi(self):
+        Follow.objects.create(follower=self.an, following=self.binh)
+        self.client.post(reverse('create_post'), {'content': 'Bài mới của Bình.'})
+        self.assertEqual(self.kinds(self.an), ['post'])
+        self.assertEqual(self.kinds(self.binh), [])   # không tự báo cho mình
+
+    def test_mo_trang_thi_da_doc(self):
+        Notification.objects.create(recipient=self.binh, actor=self.an, kind='follow')
+        self.assertContains(self.client.get(reverse('home')), '<span class="notif-num">1</span>')
+        response = self.client.get(reverse('notifications'))
+        self.assertContains(response, 'is-unread')
+        self.assertFalse(self.binh.notifications.filter(read=False).exists())
+
+    def test_dem_so_chua_doc(self):
+        Notification.objects.create(recipient=self.binh, actor=self.an, kind='follow')
+        self.assertEqual(self.client.get(reverse('notification_count')).json(), {'unread': 1})
+
+
+class PhoneLayoutTests(TestCase):
+    def test_thanh_duoi_va_trang_tim_kiem(self):
+        user = User.objects.create_user('u1', password='x', first_name='An', last_name='Lê')
+        self.client.force_login(user)
+        self.assertContains(self.client.get(reverse('home')), 'class="bottom-nav"')
+        self.assertContains(self.client.get(reverse('explore')), 'name="q"')

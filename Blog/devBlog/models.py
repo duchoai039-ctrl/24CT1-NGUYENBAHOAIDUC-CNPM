@@ -75,6 +75,22 @@ class Post(models.Model):
         return Truncator(self.content.strip()).chars(EXCERPT_MAX_CHARS)
 
     @property
+    def lead(self):
+        # Câu mở đầu nguyên vẹn, hiện to hơn (bảng tin cắt bớt bằng |truncatechars)
+        return first_sentence(self.content)
+
+    @property
+    def rest(self):
+        # Toàn bộ phần sau câu mở đầu (trang chi tiết). first_sentence luôn là phần đầu của content.strip()
+        return self.content.strip()[len(self.lead):].strip()
+
+    @property
+    def excerpt_rest(self):
+        # Phần đoạn trích sau câu mở đầu. first_sentence luôn là phần đầu của content.strip()
+        room = EXCERPT_MAX_CHARS - len(self.lead)
+        return Truncator(self.rest).chars(room) if room > 0 else ''
+
+    @property
     def has_more(self):
         return len(self.content.strip()) > EXCERPT_MAX_CHARS
 
@@ -126,3 +142,25 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{display_name(self.follower)} theo dõi {display_name(self.following)}'
+
+class Notification(models.Model):
+    """Một dòng trong chuông thông báo của `recipient`."""
+    KINDS = [
+        ('comment', 'bình luận bài của bạn'),
+        ('like', 'thích bài của bạn'),
+        ('follow', 'đã theo dõi bạn'),
+        ('post', 'vừa đăng bài mới'),
+    ]
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
+    kind = models.CharField(max_length=10, choices=KINDS)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['recipient', 'read'])]
+
+    def __str__(self):
+        return f'{display_name(self.actor)} {self.get_kind_display()}'

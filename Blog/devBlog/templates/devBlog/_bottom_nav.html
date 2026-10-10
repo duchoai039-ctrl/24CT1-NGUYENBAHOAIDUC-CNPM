@@ -1,0 +1,22 @@
+{% load perspect %}
+{% comment %}
+  Điện thoại (<= 768px), kiểu X: thanh tab dưới cùng + nút viết bài nổi. Màn rộng hơn ẩn đi.
+  Số trên chuông dùng chung markup với thanh trái nên JS hỏi số mỗi 30s cập nhật luôn.
+{% endcomment %}
+{% with page=request.resolver_match.url_name %}
+{% so_thong_bao user as unread %}
+<nav class="bottom-nav" aria-label="Điều hướng chính trên điện thoại">
+  <a href="{% url 'home' %}"{% if page == 'home' and not query %} aria-current="page"{% endif %}>
+    <i class="fa-solid fa-house" aria-hidden="true"></i><span class="visually-hidden">Bảng tin</span></a>
+  <a href="{% url 'explore' %}"{% if page == 'explore' or query %} aria-current="page"{% endif %}>
+    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span class="visually-hidden">Tìm kiếm</span></a>
+  <a href="{% url 'notifications' %}" class="bottom-bell"{% if page == 'notifications' %} aria-current="page"{% endif %}>
+    <i class="fa-solid fa-bell" aria-hidden="true"></i><span class="visually-hidden">Thông báo</span>
+    <span class="notif-count"{% if not unread %} hidden{% endif %}><span class="notif-num">{{ unread }}</span><span class="visually-hidden"> chưa đọc</span></span></a>
+  <a href="{% url 'profile' %}"{% if page == 'profile' %} aria-current="page"{% endif %}>
+    <i class="fa-solid fa-user" aria-hidden="true"></i><span class="visually-hidden">Trang cá nhân</span></a>
+</nav>
+{% if page != 'create_post' and page != 'edit_post' %}
+  <a href="{% url 'create_post' %}" class="fab-write" aria-label="Viết bài"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+{% endif %}
+{% endwith %}

@@ -1,0 +1,73 @@
+{% load perspect %}
+{% comment %}
+  Menu dọc bên trái sau khi đăng nhập (kiểu Threads/X). Chỉ hiện trên màn rộng (>= 1200px),
+  khi đó thanh trên (_navbar.html) ẩn đi; màn hẹp hơn vẫn dùng thanh trên như cũ.
+{% endcomment %}
+{% with page=request.resolver_match.url_name %}
+<nav class="side-nav" aria-label="Điều hướng chính">
+  <a href="/" class="logo" title="Perspect - Góc nhìn cuộc sống">
+    <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+      <path d="M 256 256 L 178 256 C 150.386 256 128 233.614 128 206 L 128 256 L 0 256 L 0 192 C 0 156.654 28.654 128 64 128 C 99.346 128 128 156.654 128 192 L 128 128 L 256 128 Z M 78 0 C 105.614 0 128 22.386 128 50 L 128 0 L 256 0 L 256 64 C 256 99.346 227.346 128 192 128 C 156.654 128 128 99.346 128 64 L 128 128 L 0 128 L 0 0 Z" />
+    </svg>
+    <span class="logo-text">Perspect</span>
+  </a>
+
+  <div class="side-search">{% include 'devBlog/_search_form.html' %}</div>
+
+  <ul class="side-links">
+    <li><a href="{% url 'home' %}"{% if page == 'home' and not current_tag and not query %} aria-current="page"{% endif %}>
+      <i class="fa-solid fa-house" aria-hidden="true"></i> Bảng tin</a></li>
+    {% chu_de as nav_tags %}
+    {% if nav_tags %}
+    <li>
+      <details class="side-topics" open>
+        <summary><i class="fa-solid fa-hashtag" aria-hidden="true"></i> Chủ đề <i class="fa-solid fa-chevron-down side-caret" aria-hidden="true"></i></summary>
+        <ul>
+          {% for tag in nav_tags %}
+            <li><a href="{% url 'posts_by_tag' tag.id %}"{% if current_tag.id == tag.id %} aria-current="page"{% endif %}>{{ tag.name }}</a></li>
+          {% endfor %}
+        </ul>
+      </details>
+    </li>
+    {% endif %}
+    {% so_thong_bao user as unread %}
+    <li><a href="{% url 'notifications' %}"{% if page == 'notifications' %} aria-current="page"{% endif %}>
+      <i class="fa-solid fa-bell" aria-hidden="true"></i> Thông báo
+      <span class="notif-count"{% if not unread %} hidden{% endif %}><span class="notif-num">{{ unread }}</span><span class="visually-hidden"> chưa đọc</span></span></a></li>
+    <li><a href="{% url 'profile' %}"{% if page == 'profile' %} aria-current="page"{% endif %}>
+      <i class="fa-solid fa-user" aria-hidden="true"></i> Trang cá nhân</a></li>
+  </ul>
+
+  <a href="{% url 'create_post' %}" class="btn btn-block side-write"><i class="fa-solid fa-pen" aria-hidden="true"></i> Viết bài</a>
+
+  {# Tài khoản ở cuối menu; menu con mở lên trên #}
+  <div class="user-dropdown-wrapper side-user">
+    <button type="button" class="user-pill-btn" aria-expanded="false" aria-controls="side-user-menu">
+      <span class="user-mini-avatar {{ user|tong }}" aria-hidden="true">{{ user|chu_dau }}</span>
+      <span class="user-name-text">{{ user|ten }}</span>
+      <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+    </button>
+    <div class="user-dropdown-menu" id="side-user-menu">
+      <div class="dropdown-user-header">
+        <strong>{{ user|ten }}</strong>
+        <small>{{ user.email }}</small>
+      </div>
+      <hr class="dropdown-divider" />
+      <a href="{% url 'complete_profile' %}" class="dropdown-item">
+        <i class="fa-solid fa-user-pen" aria-hidden="true"></i> Sửa thông tin
+      </a>
+      <button type="button" class="dropdown-item theme-menu-item" onclick="toggleTheme()">
+        <i class="fa-regular fa-sun theme-sun-icon" aria-hidden="true"></i>
+        <i class="fa-regular fa-moon theme-moon-icon" aria-hidden="true" style="display:none;"></i>
+        <span class="theme-label-dark">Đổi sang nền sáng</span><span class="theme-label-light">Đổi sang nền tối</span>
+      </button>
+      <form method="POST" action="{% url 'logout' %}" class="inline-form">
+        {% csrf_token %}
+        <button type="submit" class="dropdown-item logout-item">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Đăng xuất
+        </button>
+      </form>
+    </div>
+  </div>
+</nav>
+{% endwith %}

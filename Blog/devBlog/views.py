@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Post, Tag, UserProfile, Follow, first_sentence, display_name
+from .models import Post, Tag, UserProfile, Follow, Notification, first_sentence, display_name
 from .forms import RegisterForm, IntroForm, PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -51,7 +51,7 @@ def following_sidebar(user):
     }
 
 
-SUGGESTION_LIMIT = 5
+SUGGESTION_LIMIT = 3
 
 
 def people_you_may_know(user):
@@ -124,7 +124,12 @@ def home(request):
     else:
         posts = Post.objects.all().order_by('-created_at')
 
-    return render_feed(request, posts, {'query': query})
+    tag_id = request.GET.get('tag', '')
+    current_tag = Tag.objects.filter(id=tag_id).first() if tag_id.isdigit() else None
+    if current_tag:
+        posts = posts.filter(tags=current_tag)
+
+    return render_feed(request, posts, {'query': query, 'current_tag': current_tag})
 
 
 @login_required
@@ -141,6 +146,8 @@ def post_detail(request, post_id):
             comment.post = post
             comment.author = request.user
             comment.save()
+            if post.author != request.user:
+                Notification.objects.create(recipient=post.author, actor=request.user, kind='comment', post=post)
 
             return redirect(reverse('post_detail', args=[post.id]) + '#binh-luan')
 
@@ -163,8 +170,12 @@ def like_post(request, post_id):
     liked = not post.likes.filter(id=request.user.id).exists()
     if liked:
         post.likes.add(request.user)
+        if post.author != request.user:
+            Notification.objects.create(recipient=post.author, actor=request.user, kind='like', post=post)
     else:
         post.likes.remove(request.user)
+        # Bỏ thích thì rút thông báo, bấm qua lại không làm chuông đầy rác
+        Notification.objects.filter(recipient=post.author, actor=request.user, kind='like', post=post).delete()
 
     # Gọi từ JavaScript (nút thích không tải lại trang): trả trạng thái mới
     if request.headers.get('X-Requested-With') == 'fetch':
@@ -196,6 +207,7 @@ def register(request):
 def complete_profile(request):
     """ "Mọi người có thể biết đến bạn thông qua": Họ + Tên (bắt buộc) và chủ đề quan tâm."""
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    editing = bool(request.user.first_name)   # đã có tên -> đang sửa thông tin, không phải bước chào mừng
     if request.method == 'POST':
         form = IntroForm(request.POST)
         if form.is_valid():
@@ -204,6 +216,9 @@ def complete_profile(request):
             user.first_name = form.cleaned_data['first_name']
             user.save(update_fields=['last_name', 'first_name'])
             profile.interests.set(form.cleaned_data['interests'])
+            if editing:
+                messages.success(request, 'Đã lưu thông tin.')
+                return redirect('profile')
             messages.success(request, f'Chào {user.first_name}, chúc bạn có những góc nhìn thú vị!')
             return redirect('home')
     else:
@@ -213,7 +228,7 @@ def complete_profile(request):
             'interests': profile.interests.all(),
         })
 
-    return render(request, 'devBlog/welcome.html', {'form': form, 'tags': Tag.objects.all()})
+    return render(request, 'devBlog/welcome.html', {'form': form, 'tags': Tag.objects.all(), 'editing': editing})
 
 
 def login_view(request):
@@ -232,6 +247,20 @@ def login_view(request):
     return render(request, 'devBlog/login.html')
 
 
+def csrf_failure(request, reason=''):
+    # Trang đang mở còn mã CSRF cũ (đăng nhập lại ở tab khác, bấm Back sau khi đăng nhập).
+    # Đăng xuất thì vẫn cho thoát (cùng lắm web lạ làm mình bị đăng xuất, vô hại);
+    # form khác vẫn bị chặn như cũ, chỉ báo bằng lời dễ hiểu thay trang 403.
+    if request.path == reverse('logout'):
+        logout(request)
+        return redirect('login')
+    messages.error(request, 'Trang đã cũ, bạn tải lại rồi thử lần nữa nhé.')
+    back = request.META.get('HTTP_REFERER')
+    if back and url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(back)
+    return redirect('home')
+
+
 @require_POST
 def logout_view(request):
     logout(request)
@@ -247,8 +276,13 @@ def create_post(request):
             post.author = request.user
             post.save()
             form.save_m2m()  # Save ManyToMany tags
+            Notification.objects.bulk_create(
+                Notification(recipient_id=f.follower_id, actor=request.user, kind='post', post=post)
+                for f in Follow.objects.filter(following=request.user)
+            )
 
-            return redirect('my_posts')
+            messages.success(request, 'Đã đăng bài.')
+            return redirect('post_detail', post_id=post.id)
 
     else:
         form = PostForm()
@@ -298,6 +332,7 @@ def delete_post(request, post_id):
         # Xóa bài xong mới xóa file ảnh, để lỡ xóa file lỗi thì DB vẫn đúng
         if image:
             image.delete(save=False)
+        messages.success(request, 'Đã xóa bài.')
         return redirect('home')
 
     return render(request, 'devBlog/delete_post.html', {
@@ -358,8 +393,12 @@ def toggle_follow(request, user_id):
     deleted, _ = Follow.objects.filter(
         follower=request.user, following=target_user
     ).delete()
-    if not deleted:
-        Follow.objects.get_or_create(follower=request.user, following=target_user)
+    if deleted:
+        Notification.objects.filter(recipient=target_user, actor=request.user, kind='follow').delete()
+    else:
+        _, created = Follow.objects.get_or_create(follower=request.user, following=target_user)
+        if created:
+            Notification.objects.create(recipient=target_user, actor=request.user, kind='follow')
 
     # Gọi từ JavaScript (nút theo dõi không tải lại trang): trả trạng thái mới
     if is_fetch:
@@ -372,20 +411,27 @@ def toggle_follow(request, user_id):
 
 
 @login_required
-def my_posts(request):
-    posts = posts_with_stats(
-        Post.objects.filter(author=request.user).order_by('-created_at'),
-        request.user,
-    )
-
-    return render(request, 'devBlog/my_posts.html', {
-        'posts': posts
-    })
-
-
-@login_required
 def posts_by_tag(request, tag_id):
     tag = get_object_or_404(Tag, id=tag_id)
     posts = Post.objects.filter(tags=tag).order_by('-created_at')
 
     return render_feed(request, posts, {'current_tag': tag})
+
+
+@login_required
+def notifications(request):
+    items = list(request.user.notifications.select_related('actor', 'post')[:50])
+    # Mở trang là coi như đã đọc hết; `items` đã lấy trước nên vẫn tô được dòng mới
+    request.user.notifications.filter(read=False).update(read=True)
+    return render(request, 'devBlog/notifications.html', {'items': items})
+
+
+@login_required
+def notification_count(request):
+    return JsonResponse({'unread': request.user.notifications.filter(read=False).count()})
+
+
+@login_required
+def explore(request):
+    # Mục "Tìm kiếm" ở thanh dưới trên điện thoại: ô tìm + danh sách chủ đề
+    return render(request, 'devBlog/explore.html')

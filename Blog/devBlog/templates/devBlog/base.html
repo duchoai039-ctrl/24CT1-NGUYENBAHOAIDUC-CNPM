@@ -3,7 +3,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}Perspect - Góc nhìn cuộc sống{% endblock %}</title>
     <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +14,9 @@
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 <script>
   (function() {
-    const savedTheme = localStorage.getItem('theme');
+    // Chưa chọn lần nào thì theo cài đặt sáng/tối của máy
+    const savedTheme = localStorage.getItem('theme') ||
+      (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     if (savedTheme === 'light') {
       document.documentElement.setAttribute('data-theme', 'light');
     } else {
@@ -23,7 +25,7 @@
   })();
 </script>
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %}{% if user.is_authenticated %} has-side-nav{% endif %}">
     <a href="#main" class="skip-link">Bỏ qua tới nội dung</a>
 
     <div id="toast-container" class="toast-container" role="status">
@@ -35,13 +37,13 @@
       {% endfor %}
     </div>
 
-    {% block navbar %}{% include 'devBlog/_navbar.html' %}{% endblock %}
+    {% block navbar %}{% include 'devBlog/_navbar.html' %}{% if user.is_authenticated %}{% include 'devBlog/_side_nav.html' %}{% if user.first_name %}{% include 'devBlog/_bottom_nav.html' %}{% endif %}{% endif %}{% endblock %}
     {% block hero %}{% endblock %}
     <main id="main" class="container">
         {% comment %} Nút "Quay lại" trên mọi trang khi đã đăng nhập, trừ bảng tin chính (điểm xuất phát) và bước điền tên.
            Về đúng chỗ đang đọc ở trang trước (JS bên dưới); mở từ link ngoài thì về bảng tin. {% endcomment %}
         {% with page=request.resolver_match.url_name %}
-        {% if user.is_authenticated and page != 'complete_profile' and page != 'home' or user.is_authenticated and request.GET.q %}
+        {% if user.is_authenticated and page != 'complete_profile' and page != 'home' or user.is_authenticated and request.GET.q or page == 'complete_profile' and user.first_name %}
           <div class="back-bar"><a href="{% url 'home' %}" class="back-link" data-back><i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Quay lại</a></div>
         {% endif %}
         {% endwith %}
@@ -72,14 +74,38 @@
       document.addEventListener('DOMContentLoaded', function() {
         updateThemeIcons();
 
-        // Auto dismiss server toasts
+        // Thông báo tự tắt sau 4.5s; đang rê chuột hoặc Tab vào thì giữ lại để kịp đọc
         document.querySelectorAll('.toast-notification').forEach(toast => {
-          setTimeout(() => {
+          let timer;
+          const start = () => { timer = setTimeout(() => {
             toast.classList.add('toast-fade-out');
             setTimeout(() => toast.remove(), 400);
-          }, 4500);
+          }, 4500); };
+          const stop = () => clearTimeout(timer);
+          toast.addEventListener('mouseenter', stop);
+          toast.addEventListener('focusin', stop);
+          toast.addEventListener('mouseleave', start);
+          toast.addEventListener('focusout', start);
+          start();
         });
       });
+
+      // Chuông: hỏi số thông báo chưa đọc mỗi 30s, chỉ khi tab đang hiện (đỡ tốn server/DB)
+      async function refreshBell() {
+        const badges = document.querySelectorAll('.notif-count');
+        if (!badges.length || document.hidden) return;
+        try {
+          const res = await fetch('{% url "notification_count" %}', { headers: { 'X-Requested-With': 'fetch' } });
+          const { unread } = await res.json();
+          badges.forEach(b => {
+            if (unread > Number(b.querySelector('.notif-num').textContent)) replay(b, 'bump');
+            b.querySelector('.notif-num').textContent = unread;
+            b.hidden = !unread;
+          });
+        } catch (err) { /* mất mạng hoặc hết phiên: giữ số cũ, lần sau hỏi lại */ }
+      }
+      setInterval(refreshBell, 30000);
+      document.addEventListener('visibilitychange', refreshBell);   // quay lại tab là cập nhật ngay
 
       // Chạy lại một hiệu ứng CSS kể cả khi bấm liên tục
       function replay(el, cls) {
@@ -148,8 +174,7 @@
 
       // Menu người dùng: bấm nút để mở/đóng (điện thoại không rê chuột được);
       // bấm ra ngoài, nhấn Esc hoặc Tab ra khỏi menu thì đóng.
-      const userMenu = document.querySelector('.user-dropdown-wrapper');
-      if (userMenu) {
+      document.querySelectorAll('.user-dropdown-wrapper').forEach(userMenu => {
         const toggle = userMenu.querySelector('.user-pill-btn');
         const setOpen = open => {
           userMenu.classList.toggle('open', open);
@@ -158,10 +183,12 @@
         toggle.addEventListener('click', () => setOpen(!userMenu.classList.contains('open')));
         document.addEventListener('click', e => { if (!userMenu.contains(e.target)) setOpen(false); });
         userMenu.addEventListener('focusout', e => { if (!userMenu.contains(e.relatedTarget)) setOpen(false); });
+        // Máy tính: rê vào đã mở, bấm thêm sẽ gắn .open -> chuột rời đi thì đóng, không bị kẹt
+        userMenu.addEventListener('mouseleave', () => { if (matchMedia('(hover: hover)').matches) setOpen(false); });
         document.addEventListener('keydown', e => {
           if (e.key === 'Escape' && userMenu.classList.contains('open')) { setOpen(false); toggle.focus(); }
         });
-      }
+      });
 
       // Nút "Quay lại": trang trước thuộc web mình thì lùi lịch sử (trình duyệt giữ nguyên chỗ đang cuộn);
       // trang trước là chính bài này (vừa gửi bình luận) hoặc từ web khác thì đi theo href (bảng tin).
