@@ -1,4 +1,4 @@
-{% load static %}
+{% load static perspect %}
 <header class="navbar">
   <div class="navbar-left">
     <a href="/" class="logo" title="Perspect - Góc nhìn cuộc sống">
@@ -18,12 +18,12 @@
   {% if user.is_authenticated %}
   <div class="navbar-center">
     <form method="GET" action="{% url 'home' %}" class="navbar-search-form">
-      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
       </svg>
       <input type="search" name="q" placeholder="Tìm bài, tác giả, chủ đề" aria-label="Tìm kiếm" value="{{ query|default:'' }}" autocomplete="off" />
       {% if query %}
-        <a href="{% url 'home' %}" class="search-clear-btn" title="Xóa tìm kiếm">&times;</a>
+        <a href="{% url 'home' %}" class="search-clear-btn" title="Xóa tìm kiếm" aria-label="Xóa tìm kiếm">&times;</a>
       {% endif %}
     </form>
   </div>
@@ -37,26 +37,26 @@
     </button>
 
     {% if user.is_authenticated %}
-      <!-- User Profile Menu with Hover Dropdown -->
+      {# Menu người dùng: máy tính rê chuột là mở; điện thoại/bàn phím bấm nút để mở (JS trong base.html) #}
       <div class="user-dropdown-wrapper">
-        <a href="{% url 'profile' %}" class="user-pill-btn">
-          <span class="user-mini-avatar">{{ user.username|first|upper }}</span>
-          <span class="user-name-text">{{ user.username }}</span>
-          <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
-        </a>
-        <div class="user-dropdown-menu">
+        <button type="button" class="user-pill-btn" aria-expanded="false" aria-controls="user-menu">
+          <span class="user-mini-avatar" aria-hidden="true">{{ user|chu_dau }}</span>
+          <span class="user-name-text">{{ user|ten }}</span>
+          <i class="fa-solid fa-chevron-down dropdown-arrow" aria-hidden="true"></i>
+        </button>
+        <div class="user-dropdown-menu" id="user-menu">
           <div class="dropdown-user-header">
-            <strong>{{ user.username }}</strong>
+            <strong>{{ user|ten }}</strong>
             <small>{{ user.email }}</small>
           </div>
           <hr class="dropdown-divider" />
           <a href="{% url 'profile' %}" class="dropdown-item">
-            <i class="fa-solid fa-user"></i> Trang cá nhân
+            <i class="fa-solid fa-user" aria-hidden="true"></i> Trang cá nhân
           </a>
           <form method="POST" action="{% url 'logout' %}" class="inline-form">
             {% csrf_token %}
             <button type="submit" class="dropdown-item logout-item">
-              <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+              <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Đăng xuất
             </button>
           </form>
         </div>

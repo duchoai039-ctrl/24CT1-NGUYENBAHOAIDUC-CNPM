@@ -5,11 +5,11 @@
     <ul class="following-list">
       {% for u in following_users %}
         <li>
-          <a href="{% url 'user_profile' u.username %}" class="following-person">
-            <span class="following-avatar" aria-hidden="true">{{ u.username|first|upper }}</span>
+          <a href="{% url 'user_profile' u.id %}" class="following-person">
+            <span class="following-avatar" aria-hidden="true">{{ u|chu_dau }}</span>
             <span class="following-text">
               <span class="following-name">
-                {{ u.username }}
+                {{ u|ten }}
                 {% if u.posted_recently %}<span class="new-dot" title="Có bài mới trong 24 giờ qua"></span><span class="visually-hidden"> (có bài mới)</span>{% endif %}
               </span>
               <span class="following-meta">
@@ -25,23 +25,41 @@
     {% endif %}
   {% else %}
     <p class="aside-empty">Bạn chưa theo dõi ai. Theo dõi một người để thấy họ ở đây.</p>
-    {% if follow_suggestions %}
-      <ul class="following-list">
-        {% for u in follow_suggestions %}
-          <li>
-            <a href="{% url 'user_profile' u.username %}" class="following-person">
-              <span class="following-avatar" aria-hidden="true">{{ u.username|first|upper }}</span>
-              <span class="following-text">
-                <span class="following-name">{{ u.username }}</span>
-                <span class="following-meta">{{ u.n_posts }} bài viết</span>
-              </span>
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
-    {% endif %}
   {% endif %}
 </section>
+
+{% if people_you_may_know %}
+<section class="aside-section" aria-labelledby="suggest-heading">
+  <h2 id="suggest-heading">Những người bạn có thể biết</h2>
+  <ul class="following-list">
+    {% for u in people_you_may_know %}
+      <li class="suggest-item">
+        <a href="{% url 'user_profile' u.id %}" class="following-person">
+          <span class="following-avatar" aria-hidden="true">{{ u|chu_dau }}</span>
+          <span class="following-text">
+            <span class="following-name">{{ u|ten }}</span>
+            <span class="following-meta">
+              {% if u.follows_me %}Đang theo dõi bạn
+              {% elif u.mutual %}{{ u.mutual }} bạn chung
+              {% elif u.shared %}Cùng quan tâm {{ u.shared }} chủ đề
+              {% elif u.n_posts %}{{ u.n_posts }} bài viết
+              {% else %}Thành viên mới{% endif %}
+            </span>
+          </span>
+        </a>
+        <form method="POST" action="{% url 'toggle_follow' u.id %}" class="inline-form follow-form">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-small follow-btn follow-btn-compact" aria-pressed="false">
+            <span class="follow-label-off">Theo dõi<span class="visually-hidden"> {{ u|ten }}</span></span>
+            <span class="follow-label-on"><i class="fa-solid fa-check" aria-hidden="true"></i> Đã theo dõi</span>
+            <span class="follow-label-hover">Bỏ theo dõi</span>
+          </button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 
 {% if tags %}
 <section class="aside-section">

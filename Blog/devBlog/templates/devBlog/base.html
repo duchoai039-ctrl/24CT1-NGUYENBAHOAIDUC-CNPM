@@ -38,6 +38,13 @@
     {% block navbar %}{% include 'devBlog/_navbar.html' %}{% endblock %}
     {% block hero %}{% endblock %}
     <main id="main" class="container">
+        {% comment %} Nút "Quay lại" trên mọi trang khi đã đăng nhập, trừ bảng tin chính (điểm xuất phát) và bước điền tên.
+           Về đúng chỗ đang đọc ở trang trước (JS bên dưới); mở từ link ngoài thì về bảng tin. {% endcomment %}
+        {% with page=request.resolver_match.url_name %}
+        {% if user.is_authenticated and page != 'complete_profile' and page != 'home' or user.is_authenticated and request.GET.q %}
+          <div class="back-bar"><a href="{% url 'home' %}" class="back-link" data-back><i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Quay lại</a></div>
+        {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </main>
     {% include 'devBlog/_footer.html' %}
@@ -137,6 +144,35 @@
           btn.disabled = false;
         }
         quietForms[selector](form, data);
+      });
+
+      // Menu người dùng: bấm nút để mở/đóng (điện thoại không rê chuột được);
+      // bấm ra ngoài, nhấn Esc hoặc Tab ra khỏi menu thì đóng.
+      const userMenu = document.querySelector('.user-dropdown-wrapper');
+      if (userMenu) {
+        const toggle = userMenu.querySelector('.user-pill-btn');
+        const setOpen = open => {
+          userMenu.classList.toggle('open', open);
+          toggle.setAttribute('aria-expanded', open);
+        };
+        toggle.addEventListener('click', () => setOpen(!userMenu.classList.contains('open')));
+        document.addEventListener('click', e => { if (!userMenu.contains(e.target)) setOpen(false); });
+        userMenu.addEventListener('focusout', e => { if (!userMenu.contains(e.relatedTarget)) setOpen(false); });
+        document.addEventListener('keydown', e => {
+          if (e.key === 'Escape' && userMenu.classList.contains('open')) { setOpen(false); toggle.focus(); }
+        });
+      }
+
+      // Nút "Quay lại": trang trước thuộc web mình thì lùi lịch sử (trình duyệt giữ nguyên chỗ đang cuộn);
+      // trang trước là chính bài này (vừa gửi bình luận) hoặc từ web khác thì đi theo href (bảng tin).
+      document.addEventListener('click', function(e) {
+        const link = e.target.closest('[data-back]');
+        if (!link || !document.referrer) return;
+        const prev = new URL(document.referrer);
+        if (prev.origin === location.origin && prev.pathname !== location.pathname) {
+          e.preventDefault();
+          history.back();
+        }
       });
 
       // Rời chuột khỏi nút theo dõi thì lần rê sau mới được hiện "Bỏ theo dõi"
