@@ -479,14 +479,10 @@ a:hover { color: var(--gold); }
 .feed-subtitle { margin-top: 0.35rem; color: var(--muted); }
 
 /* Một bài: tác giả -> nội dung -> thời gian -> ảnh -> thích/bình luận.
-   Không hộp, không bóng; các bài ngăn bằng kẻ ngang rõ nét. */
-/* Mỗi bài là một "tấm" riêng: nền khác nền trang một bậc, viền rõ, không đổ bóng, không chuyển màu */
+   Không khung, không nền riêng: các bài chỉ ngăn bằng một đường kẻ mảnh, như dòng thời gian. */
 .post-item {
-  margin-top: 1rem;
-  padding: 1.35rem 1.5rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-panel);
+  padding: 1.5rem 0 0.75rem;
+  border-bottom: 1px solid var(--line-strong);
 }
 
 /* Chỗ viết bài đầu bảng tin: cùng dáng tấm với bài viết, chữ mời như placeholder */
@@ -582,8 +578,6 @@ a:hover { color: var(--gold); }
   justify-content: space-between;
   gap: 0.5rem 1rem;
   margin-top: 1rem;
-  padding-top: 0.25rem;   /* nút thích/bình luận đã cao 44px */
-  border-top: 1px solid var(--line);   /* tách phần đọc với phần thích / bình luận */
   font-size: 0.875rem;
 }
 
@@ -1181,7 +1175,7 @@ body.landing-page-active .footer { display: none; }
 
 @media (max-width: 640px) {
   .container { padding: 1.75rem 1rem 3rem; }
-  .post-item { padding: 1.1rem 1.1rem 0.85rem; }
+  .post-item { padding: 1.25rem 0 0.6rem; }
   .article-body, .comments { padding: 1.25rem 1.1rem; }
   .post-actions { margin-left: 0; }
   .lacquer-band { height: 7rem; }
