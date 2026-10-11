@@ -38,13 +38,14 @@
       </a>
     {% endif %}
 
-    {% if not query and not current_tag and posts.number == 1 %}
-      {% include 'devBlog/_suggest_strip.html' %}
-    {% endif %}
-
     {% for post in posts %}
       {% include 'devBlog/_post_item.html' %}
+      {# Màn hẹp: gợi ý người theo dõi chen sau bài thứ 3 (ít bài hơn thì sau bài cuối), để bài đầu tiên lên sớm #}
+      {% if not query and not current_tag and posts.number == 1 %}{% if forloop.counter == 3 or forloop.last and forloop.counter < 3 %}
+        {% include 'devBlog/_suggest_strip.html' %}
+      {% endif %}{% endif %}
     {% empty %}
+      {% if not query and not current_tag %}{% include 'devBlog/_suggest_strip.html' %}{% endif %}
       <div class="empty-state">
         {% if query %}
           <p>Không có bài nào khớp với “{{ query }}”. Thử từ khác, hoặc tìm theo tên tác giả.</p>

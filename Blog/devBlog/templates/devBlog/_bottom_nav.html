@@ -7,16 +7,16 @@
 {% so_thong_bao user as unread %}
 <nav class="bottom-nav" aria-label="Điều hướng chính trên điện thoại">
   <a href="{% url 'home' %}"{% if page == 'home' and not query %} aria-current="page"{% endif %}>
-    <i class="fa-solid fa-house" aria-hidden="true"></i><span class="visually-hidden">Bảng tin</span></a>
+    <i class="fa-solid fa-house" aria-hidden="true"></i><span class="tab-label">Bảng tin</span></a>
   <a href="{% url 'explore' %}"{% if page == 'explore' or query %} aria-current="page"{% endif %}>
-    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span class="visually-hidden">Tìm kiếm</span></a>
+    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span class="tab-label">Tìm kiếm</span></a>
   <a href="{% url 'notifications' %}" class="bottom-bell"{% if page == 'notifications' %} aria-current="page"{% endif %}>
-    <i class="fa-solid fa-bell" aria-hidden="true"></i><span class="visually-hidden">Thông báo</span>
+    <i class="fa-solid fa-bell" aria-hidden="true"></i><span class="tab-label">Thông báo</span>
     <span class="notif-count"{% if not unread %} hidden{% endif %}><span class="notif-num">{{ unread }}</span><span class="visually-hidden"> chưa đọc</span></span></a>
   <a href="{% url 'profile' %}"{% if page == 'profile' %} aria-current="page"{% endif %}>
-    <i class="fa-solid fa-user" aria-hidden="true"></i><span class="visually-hidden">Trang cá nhân</span></a>
+    <i class="fa-solid fa-user" aria-hidden="true"></i><span class="tab-label">Cá nhân</span></a>
 </nav>
-{% if page != 'create_post' and page != 'edit_post' %}
-  <a href="{% url 'create_post' %}" class="fab-write" aria-label="Viết bài"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+{% if page != 'create_post' and page != 'edit_post' and page != 'complete_profile' and page != 'post_detail' %}
+  <a href="{% url 'create_post' %}" class="fab-write" aria-label="Viết bài" aria-keyshortcuts="n"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
 {% endif %}
 {% endwith %}
