@@ -72,10 +72,9 @@
           <a href="{% url 'user_profile' comment.author.id %}" class="post-author">{{ comment.author|ten }}</a>
           <time datetime="{{ comment.created_at|date:'c' }}" title="{{ comment.created_at|ngay_gio }}">{{ comment.created_at|thoi_gian }}</time>
           {% if comment.author == user %}
-            <form method="POST" action="{% url 'delete_comment' comment.id %}" class="comment-delete"
-                  onsubmit="return confirm('Xóa bình luận này? Không lấy lại được.')">
+            <form method="POST" action="{% url 'delete_comment' comment.id %}" class="comment-delete">
               {% csrf_token %}
-              <button type="submit">Xóa</button>
+              <button type="submit" data-confirm="Chắc chưa? Xóa" aria-live="polite">Xóa</button>
             </form>
           {% endif %}
         </div>

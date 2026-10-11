@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}Perspect - Góc nhìn cuộc sống{% endblock %}</title>
+    <meta name="description" content="Perspect: nơi kể điều bạn thấy và nhìn đời qua mắt người khác.">
+    <meta property="og:site_name" content="Perspect">
+    <meta property="og:title" content="Perspect - Góc nhìn cuộc sống">
+    <meta property="og:description" content="Nơi kể điều bạn thấy và nhìn đời qua mắt người khác.">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/landing/landing-1.jpg' %}">
+    <meta property="og:type" content="website">
     <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,6 +221,19 @@
       window.addEventListener('pageshow', function() {
         document.querySelectorAll('button[data-label]').forEach(b => { b.disabled = false; b.textContent = b.dataset.label; });
       });
+      // Nút có data-confirm: bấm lần 1 đổi chữ thành câu hỏi, bấm lần 2 mới gửi; rời nút hoặc 4s sau thì về như cũ
+      document.addEventListener('click', function(e) {
+        const btn = e.target.closest('button[data-confirm]');
+        if (!btn || btn.classList.contains('is-armed')) return;
+        e.preventDefault();
+        const label = btn.textContent;
+        const reset = () => { btn.classList.remove('is-armed'); btn.textContent = label; };
+        btn.classList.add('is-armed');
+        btn.textContent = btn.dataset.confirm;
+        btn.addEventListener('blur', reset, { once: true });
+        setTimeout(reset, 4000);
+      });
+
       // Ctrl/Cmd+Enter trong ô soạn thảo: gửi form
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.matches('textarea') && e.target.form) {

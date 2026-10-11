@@ -328,3 +328,15 @@ class DeleteCommentTests(TestCase):
         self.client.force_login(self.binh)
         self.assertEqual(self.client.get(self.url).status_code, 405)
         self.assertTrue(Comment.objects.filter(id=self.comment.id).exists())
+
+
+class NotFoundAndMetaTests(TestCase):
+    def test_trang_404_rieng(self):
+        response = self.client.get('/khong-co-trang-nay/')
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, 'Không tìm thấy trang này', status_code=404)
+
+    def test_the_meta_chia_se(self):
+        response = self.client.get('/')
+        self.assertContains(response, 'property="og:image"')
+        self.assertContains(response, 'name="description"')

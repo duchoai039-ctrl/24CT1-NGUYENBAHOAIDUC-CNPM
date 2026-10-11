@@ -1,0 +1,12 @@
+{% extends 'devBlog/base.html' %}
+{% comment %} Django tự dùng file này khi không tìm thấy trang (chỉ khi DEBUG tắt, tức trên web thật). {% endcomment %}
+
+{% block title %}Không tìm thấy trang - Perspect{% endblock %}
+
+{% block content %}
+<div class="page-narrow empty-state">
+  <h1 class="page-title">Không tìm thấy trang này</h1>
+  <p>Có thể bài đã bị tác giả xóa, hoặc đường dẫn bị gõ sai.</p>
+  <a href="{% if user.is_authenticated %}{% url 'home' %}{% else %}/{% endif %}" class="btn">{% if user.is_authenticated %}Về bảng tin{% else %}Về trang chủ{% endif %}</a>
+</div>
+{% endblock %}
