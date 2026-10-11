@@ -11,3 +11,7 @@ Blog/staticfiles/
 # Dữ liệu xuất ra để chuyển sang Neon (có mật khẩu đã mã hóa của người dùng) và chuỗi kết nối bí mật
 du_lieu*.json
 .env
+
+# Công cụ AI cục bộ, không đưa lên git
+.claude/
+.impeccable/
