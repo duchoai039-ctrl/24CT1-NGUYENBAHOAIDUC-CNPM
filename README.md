@@ -17,7 +17,13 @@ Uploaded images: **Cloudinary**. The SQLite file is only a local development fal
 
 ## Mã nguồn
 
-- `Blog/Blog/settings.py`: cấu hình (Neon qua `DATABASE_URL`, Cloudinary qua `CLOUDINARY_URL`)
-- `Blog/devBlog/`: app chính (models, views, forms, templates, `static/css/main.css`)
+```
+Blog/
+├── Blog/        cấu hình: settings.py (Neon qua DATABASE_URL, Cloudinary qua CLOUDINARY_URL), urls gốc
+├── devBlog/     BACKEND: models, views, forms, urls, migrations, templatetags, tests
+└── frontend/    FRONTEND
+    ├── templates/devBlog/   trang HTML (file bắt đầu bằng _ là phần dùng chung: _navbar, _post_item…)
+    └── static/              css/main.css, img/
+```
 
 Cách deploy và chạy trên máy: xem [DEPLOY.md](DEPLOY.md).
