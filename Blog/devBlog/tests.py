@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from .forms import normalize_phone
-from .models import Post, UserProfile, Follow, Tag, Notification
+from .models import Post, Comment, UserProfile, Follow, Tag, Notification
 from .views import people_you_may_know
 
 
@@ -64,6 +64,13 @@ class PostOwnershipTests(TestCase):
         post = Post.objects.latest('id')
         self.assertRedirects(response, reverse('post_detail', args=[post.id]))
         self.assertContains(response, 'Đã đăng bài.')
+
+    def test_bai_khong_anh_qua_ngan_bi_chan(self):
+        self.client.force_login(self.author)
+        before = Post.objects.count()
+        response = self.client.post(reverse('create_post'), {'content': 'd'})
+        self.assertContains(response, 'Bài hơi ngắn')
+        self.assertEqual(Post.objects.count(), before)
 
 
 class EditInfoTests(TestCase):
@@ -295,3 +302,29 @@ class PhoneLayoutTests(TestCase):
         self.client.force_login(user)
         self.assertContains(self.client.get(reverse('home')), 'class="bottom-nav"')
         self.assertContains(self.client.get(reverse('explore')), 'name="q"')
+
+
+class DeleteCommentTests(TestCase):
+    """Chỉ người viết bình luận mới xóa được, và chỉ bằng POST."""
+
+    def setUp(self):
+        self.an = User.objects.create_user('an', password='Hoa-Sen!2026', first_name='An', last_name='Lê')
+        self.binh = User.objects.create_user('binh', password='Hoa-Sen!2026', first_name='Bình', last_name='Trần')
+        post = Post.objects.create(author=self.an, content='Bài của An.')
+        self.comment = Comment.objects.create(post=post, author=self.binh, content='Hay quá')
+        self.url = reverse('delete_comment', args=[self.comment.id])
+
+    def test_nguoi_viet_xoa_duoc(self):
+        self.client.force_login(self.binh)
+        self.client.post(self.url)
+        self.assertFalse(Comment.objects.filter(id=self.comment.id).exists())
+
+    def test_nguoi_khac_khong_xoa_duoc(self):
+        self.client.force_login(self.an)   # chủ bài nhưng không phải người viết bình luận
+        self.client.post(self.url)
+        self.assertTrue(Comment.objects.filter(id=self.comment.id).exists())
+
+    def test_get_khong_xoa(self):
+        self.client.force_login(self.binh)
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+        self.assertTrue(Comment.objects.filter(id=self.comment.id).exists())

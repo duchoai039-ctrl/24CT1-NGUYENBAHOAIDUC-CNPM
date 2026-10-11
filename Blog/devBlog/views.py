@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Post, Tag, UserProfile, Follow, Notification, first_sentence, display_name
+from .models import Post, Comment, Tag, UserProfile, Follow, Notification, first_sentence, display_name
 from .forms import RegisterForm, IntroForm, PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -338,6 +338,15 @@ def delete_post(request, post_id):
     return render(request, 'devBlog/delete_post.html', {
         'post': post
     })
+
+@login_required
+@require_POST
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    if comment.author == request.user:
+        comment.delete()
+        messages.success(request, 'Đã xóa bình luận.')
+    return redirect(reverse('post_detail', args=[comment.post_id]) + '#binh-luan')
 
 @login_required
 def profile(request):

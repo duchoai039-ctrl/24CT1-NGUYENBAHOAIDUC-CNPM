@@ -60,18 +60,25 @@
     <form method="POST" class="comment-form">
       {% csrf_token %}
       <label for="id_content" class="visually-hidden">Viết bình luận</label>
-      <textarea name="content" id="id_content" rows="3" placeholder="Bạn nghĩ gì về góc nhìn này?" required>{{ form.content.value|default:'' }}</textarea>
-      {% for error in form.content.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      <textarea name="content" id="id_content" rows="3" placeholder="Bạn nghĩ gì về góc nhìn này? (Ctrl+Enter để gửi)" required{% if form.content.errors %} aria-invalid="true" aria-describedby="comment-error"{% endif %}>{{ form.content.value|default:'' }}</textarea>
+      {% if form.content.errors %}<p class="field-error" id="comment-error">{{ form.content.errors|join:" " }}</p>{% endif %}
       <button type="submit" class="btn">Gửi bình luận</button>
     </form>
 
     {% for comment in comments %}
       <div class="comment">
-        <p class="comment-meta">
+        <div class="comment-meta">
           <span class="byline-avatar {{ comment.author|tong }}" aria-hidden="true">{{ comment.author|chu_dau }}</span>
           <a href="{% url 'user_profile' comment.author.id %}" class="post-author">{{ comment.author|ten }}</a>
           <time datetime="{{ comment.created_at|date:'c' }}" title="{{ comment.created_at|ngay_gio }}">{{ comment.created_at|thoi_gian }}</time>
-        </p>
+          {% if comment.author == user %}
+            <form method="POST" action="{% url 'delete_comment' comment.id %}" class="comment-delete"
+                  onsubmit="return confirm('Xóa bình luận này? Không lấy lại được.')">
+              {% csrf_token %}
+              <button type="submit">Xóa</button>
+            </form>
+          {% endif %}
+        </div>
         <div class="comment-body">{{ comment.content|linebreaks }}</div>
       </div>
     {% empty %}

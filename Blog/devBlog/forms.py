@@ -103,6 +103,16 @@ class PostForm(forms.ModelForm):
         model = Post
         fields = ['content', 'image', 'tags']  # tiêu đề tự lấy từ nội dung (xem Post.save)
 
+    MIN_TEXT_ONLY = 10   # bài không ảnh mà ngắn hơn thì người đọc không hiểu bạn muốn nói gì
+
+    def clean(self):
+        cleaned = super().clean()
+        content = (cleaned.get('content') or '').strip()
+        has_image = cleaned.get('image') or (self.instance.pk and self.instance.image)
+        if content and not has_image and len(content) < self.MIN_TEXT_ONLY:
+            self.add_error('content', f'Bài hơi ngắn. Viết ít nhất {self.MIN_TEXT_ONLY} ký tự, hoặc đăng kèm một ảnh.')
+        return cleaned
+
 
 class CommentForm(forms.ModelForm):
 
