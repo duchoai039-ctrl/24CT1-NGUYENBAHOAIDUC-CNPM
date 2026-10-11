@@ -1011,15 +1011,6 @@ input:focus-visible, textarea:focus-visible { outline-offset: 0; border-color: v
   font-size: 1.35rem;
 }
 
-/* ---------- Footer ---------- */
-.footer {
-  padding: 2rem 1.25rem;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 0.875rem;
-  text-align: center;
-}
-
 /* ==========================================================================
    Trang landing (chưa đăng nhập)
    Ba màn hình xếp dọc, mỗi màn một ảnh phủ kín. Lớp phủ tối nên chữ luôn sáng ở cả 2 chế độ:
@@ -1035,7 +1026,6 @@ body.landing-page-active {
   background: #1E140D;
 }
 body.landing-page-active .container { max-width: none; padding: 0; }
-body.landing-page-active .footer { display: none; }
 .landing-panel {
   position: relative;
   min-height: 100vh;
