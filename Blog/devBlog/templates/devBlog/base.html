@@ -30,7 +30,7 @@
 
     <div id="toast-container" class="toast-container" role="status">
       {% for message in messages %}
-        <div class="toast-notification toast-{{ message.tags|default:'info' }}">
+        <div class="toast-notification toast-{{ message.tags|default:'info' }}"{% if message.tags == 'error' %} role="alert"{% endif %}>
           <p class="toast-body">{{ message }}</p>
           <button type="button" class="toast-close" onclick="this.parentElement.remove()" aria-label="Đóng thông báo">&times;</button>
         </div>
@@ -43,7 +43,7 @@
         {% comment %} Nút "Quay lại" trên mọi trang khi đã đăng nhập, trừ bảng tin chính (điểm xuất phát) và bước điền tên.
            Về đúng chỗ đang đọc ở trang trước (JS bên dưới); mở từ link ngoài thì về bảng tin. {% endcomment %}
         {% with page=request.resolver_match.url_name %}
-        {% if user.is_authenticated and page != 'complete_profile' and page != 'home' or user.is_authenticated and request.GET.q or page == 'complete_profile' and user.first_name %}
+        {% if user.is_authenticated and page != 'complete_profile' and page != 'home' and page != 'notifications' and page != 'explore' and page != 'profile' or user.is_authenticated and request.GET.q or page == 'complete_profile' and user.first_name %}
           <div class="back-bar"><a href="{% url 'home' %}" class="back-link" data-back><i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Quay lại</a></div>
         {% endif %}
         {% endwith %}
@@ -199,6 +199,39 @@
         if (prev.origin === location.origin && prev.pathname !== location.pathname) {
           e.preventDefault();
           history.back();
+        }
+      });
+
+      // Gửi form: khóa nút và đổi chữ để không bấm hai lần (like/theo dõi tự gửi bằng fetch nên đã preventDefault)
+      document.addEventListener('submit', function(e) {
+        if (e.defaultPrevented) return;
+        const btn = e.target.querySelector('button[type="submit"]');
+        if (!btn || !e.target.matches('.stack-form, .comment-form')) return;
+        btn.dataset.label = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Đang gửi…';
+      });
+      // Quay lại trang bằng nút Back của trình duyệt thì mở khóa nút
+      window.addEventListener('pageshow', function() {
+        document.querySelectorAll('button[data-label]').forEach(b => { b.disabled = false; b.textContent = b.dataset.label; });
+      });
+      // Ctrl/Cmd+Enter trong ô soạn thảo: gửi form
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.matches('textarea') && e.target.form) {
+          e.preventDefault();
+          e.target.form.requestSubmit();
+        }
+      });
+
+      // Phím tắt: "/" tới ô tìm kiếm, "n" viết bài (bỏ qua khi đang gõ chữ hoặc giữ Ctrl/Alt/Cmd)
+      document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input, textarea, select, [contenteditable]')) return;
+        if (e.key === '/') {
+          const box = [...document.querySelectorAll('input[type="search"]')].find(el => el.offsetParent);
+          if (box) { e.preventDefault(); box.focus(); }
+        } else if (e.key === 'n' || e.key === 'N') {
+          const write = document.querySelector('.side-write, .fab-write');
+          if (write) location.href = write.href;
         }
       });
 

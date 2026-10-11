@@ -13,16 +13,20 @@
           <a class="notif-item{% if not n.read %} is-unread{% endif %}"
              href="{% if n.post %}{% url 'post_detail' n.post.id %}{% if n.kind == 'comment' %}#binh-luan{% endif %}{% else %}{% url 'user_profile' n.actor.id %}{% endif %}">
             <span class="byline-avatar {{ n.actor|tong }}" aria-hidden="true">{{ n.actor|chu_dau }}</span>
-            <span class="notif-text">
+            <span class="notif-text">{% if not n.read %}<span class="visually-hidden">Mới: </span>{% endif %}
               <strong>{{ n.actor|ten }}</strong> {{ n.get_kind_display }}{% if n.post %}: <span class="notif-post">{{ n.post.title }}</span>{% endif %}
               <time datetime="{{ n.created_at|date:'c' }}" title="{{ n.created_at|ngay_gio }}">{{ n.created_at|thoi_gian }}</time>
             </span>
+            {% if not n.read %}<span class="notif-unread-dot" aria-hidden="true"></span>{% endif %}
           </a>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p class="lead">Chưa có gì mới. Khi có người bình luận, thích bài hay theo dõi bạn, hoặc người bạn theo dõi đăng bài, bạn sẽ thấy ở đây.</p>
+    <div class="empty-state">
+      <p>Chưa có gì mới. Khi có người bình luận, thích bài hay theo dõi bạn, hoặc người bạn theo dõi đăng bài, bạn sẽ thấy ở đây.</p>
+      <a href="{% url 'explore' %}" class="btn btn-secondary">Tìm người và chủ đề để theo dõi</a>
+    </div>
   {% endif %}
 </div>
 {% endblock %}

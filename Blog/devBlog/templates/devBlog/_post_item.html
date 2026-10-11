@@ -17,13 +17,14 @@
     </div>
   {% endif %}
 
-  <div class="post-item-content">
-    <p class="post-lead">{{ post.lead|truncatechars:300 }}</p>
+  {# Cả khối chữ là một link vào bài; "Đọc tiếp" là span vì link không được lồng link #}
+  <a href="{% url 'post_detail' post.id %}" class="post-item-content" aria-labelledby="lead-{{ post.id }}">
+    <p class="post-lead" id="lead-{{ post.id }}">{{ post.lead|truncatechars:300 }}</p>
     {% if post.excerpt_rest %}<p>{{ post.excerpt_rest|linebreaksbr }}</p>{% endif %}
     {% if post.has_more %}
-      <a href="{% url 'post_detail' post.id %}" class="read-more">Đọc tiếp</a>
+      <span class="read-more">Đọc tiếp</span>
     {% endif %}
-  </div>
+  </a>
 
   {% if hide_author or post.tags.all %}
     <div class="post-meta">

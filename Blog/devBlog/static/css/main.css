@@ -47,7 +47,7 @@
   --on-text: #EFE6D6;
   --accent: #A23B2A;
   --accent-hover: #8E3324;
-  --tag-bg: #E3D2AE;
+  --tag-bg: #E8D9B8;      /* chữ --gold trên nền này 4.56:1 */
   color-scheme: light;
 }
 
@@ -320,7 +320,8 @@ a:hover { color: var(--gold); }
   color: var(--text); text-decoration: none;
 }
 .notif-item:hover { border-color: var(--gold); }
-.notif-item.is-unread { border-left: 3px solid var(--son); }
+.notif-item.is-unread { border-color: var(--son); }
+.notif-unread-dot { flex: none; width: 0.5rem; height: 0.5rem; margin-top: 0.55rem; border-radius: 50%; background: var(--son); }
 .notif-text { flex: 1; min-width: 0; }
 .notif-post { color: var(--muted); }
 .notif-text time { display: block; margin-top: 0.15rem; font-size: 0.85rem; color: var(--muted); }
@@ -429,24 +430,28 @@ a:hover { color: var(--gold); }
   width: max-content;
   max-width: min(28rem, calc(100vw - 2rem));
 }
+/* Đảo màu so với trang (nền chữ, chữ nền) để toast nổi hẳn lên; lỗi thì nền son */
 .toast-notification {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
+  padding: 0.9rem 1rem;
+  background: var(--text);
+  color: var(--on-text);
   border-radius: var(--radius);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);   /* lớp nổi duy nhất có bóng */
   transition: opacity 0.4s ease;
 }
-.toast-error { border-color: var(--son); }
-.toast-body { flex: 1; font-size: 0.95rem; }
+.toast-error { background: var(--accent); color: var(--on-accent); }
+.toast-body { flex: 1; font-size: 0.95rem; font-weight: 500; }
 .toast-close {
   display: grid; place-items: center;
-  width: 2.75rem; height: 2.75rem; margin: -0.85rem -1rem -0.85rem 0;   /* vùng chạm 44px, không làm toast to ra */
-  border: 0; background: none; color: var(--muted);
+  width: 2.75rem; height: 2.75rem; margin: -0.9rem -1rem -0.9rem 0;   /* vùng chạm 44px, không làm toast to ra */
+  border: 0; background: none; color: inherit; opacity: 0.7;
   font-size: 1.25rem; line-height: 1; cursor: pointer;
 }
+.toast-close:hover, .toast-close:focus-visible { opacity: 1; }
+.toast-close:focus-visible { outline-color: currentColor; }   /* viền vàng chìm trên nền đảo màu */
 .toast-fade-out { opacity: 0; }
 
 /* ---------- Trang chủ: cột đọc + cột phụ ---------- */
@@ -524,12 +529,15 @@ a:hover { color: var(--gold); }
 .byline-person:hover { color: var(--text); }
 
 .post-item-content {
+  display: block;
+  text-decoration: none;
   margin-top: 0.85rem;
   font-family: var(--font-read);
   font-size: 1.125rem;
   line-height: 1.7;
   overflow-wrap: break-word;
 }
+.post-item-content:hover { color: inherit; }   /* bấm được nhưng không đổi màu khi rê chuột */
 .post-lead { font-size: 1.3rem; font-weight: 600; line-height: 1.45; }   /* câu mở đầu: điểm nhấn của bài */
 .post-lead + p { margin-top: 0.5rem; }
 .read-more { margin-left: 0.35rem; color: var(--muted); font-family: var(--font-ui); font-size: 0.9rem; font-weight: 500; white-space: nowrap; }
@@ -665,7 +673,7 @@ a:hover { color: var(--gold); }
 .topic-chips::-webkit-scrollbar { display: none; }
 .topic-chips a {
   flex-shrink: 0; display: inline-flex; align-items: center;
-  min-height: 2.5rem; padding: 0 1rem;
+  min-height: 2.75rem; padding: 0 1rem;
   border-radius: 999px; background: var(--tag-bg); color: var(--gold);
   font-size: 0.925rem; font-weight: 500; text-decoration: none; white-space: nowrap;
 }
@@ -813,6 +821,12 @@ a:hover { color: var(--gold); }
 .comment-meta { display: flex; align-items: center; gap: 0.65rem; font-size: 0.875rem; color: var(--muted); }
 .comment-meta .byline-avatar { width: 1.85rem; height: 1.85rem; font-size: 0.85rem; }
 .comment-meta time { margin-left: 0.35rem; }
+.comment-delete { margin-left: auto; }
+.comment-delete button {
+  min-height: 2.75rem; padding: 0 0.5rem; border: 0; background: none;
+  color: var(--muted); font: inherit; cursor: pointer;
+}
+.comment-delete button:hover { color: var(--son); text-decoration: underline; }
 .comment-body { padding-left: 2.5rem; }
 .comment-body { margin-top: 0.4rem; font-family: var(--font-read); font-size: 1.05rem; line-height: 1.65; }
 .comment-body p + p { margin-top: 0.8em; }
@@ -826,6 +840,14 @@ a:hover { color: var(--gold); }
 .optional { font-weight: 400; color: var(--muted); }
 .field-hint { font-size: 0.85rem; color: var(--muted); }
 .field-error { font-size: 0.875rem; color: var(--son); }
+.char-count.is-warning { color: var(--son); }
+.btn:disabled { opacity: 0.7; cursor: progress; }
+.dropdown-hint { margin: 0.4rem 0.9rem 0.2rem; font-size: 0.8rem; color: var(--muted); }
+.dropdown-hint kbd {
+  padding: 0 0.3rem; border: 1px solid var(--line-strong); border-radius: 4px;
+  font-family: inherit; font-size: 0.75rem; color: var(--text);
+}
+@media (hover: none) { .dropdown-hint { display: none; } }   /* máy cảm ứng không có bàn phím */
 .form-error {
   margin-bottom: 1.25rem;
   padding: 0.75rem 1rem;
@@ -1116,7 +1138,7 @@ body.landing-page-active .footer { display: none; }
   .theme-menu-item { display: flex; }
 
   /* Đã đăng nhập: bố cục kiểu X. Trên: avatar trái, logo giữa. Tìm kiếm + chuông xuống thanh dưới */
-  body.has-side-nav { padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)); }
+  body.has-side-nav { padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px)); }   /* thanh tab + nút viết nổi */
   body.has-side-nav .navbar { justify-content: center; min-height: 3.25rem; }
   body.has-side-nav .navbar-center, body.has-side-nav .nav-bell { display: none; }
   body.has-side-nav .navbar-right { position: absolute; left: 1rem; top: 0; bottom: 0; margin: 0; }
@@ -1131,11 +1153,13 @@ body.landing-page-active .footer { display: none; }
   }
   .bottom-nav a {
     position: relative; flex: 1;
-    display: grid; place-items: center; height: 3.5rem;
-    color: var(--muted); font-size: 1.25rem; text-decoration: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+    height: 3.5rem;
+    color: var(--muted); font-size: 1.15rem; text-decoration: none;
   }
+  .bottom-nav .tab-label { font-size: 0.75rem; font-weight: 500; line-height: 1; }
   .bottom-nav a[aria-current="page"] { color: var(--gold); }
-  .bottom-nav .notif-count { position: absolute; top: 0.45rem; left: 50%; margin-left: 0.3rem; }
+  .bottom-nav .notif-count { position: absolute; top: 0.25rem; left: 50%; margin-left: 0.3rem; }
   .fab-write {
     position: fixed; right: 1rem; z-index: 1000;
     bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));

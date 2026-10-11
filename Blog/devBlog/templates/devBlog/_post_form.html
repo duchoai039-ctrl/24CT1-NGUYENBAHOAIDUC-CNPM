@@ -7,10 +7,11 @@
 
   <div class="field">
     <label for="id_content">Bạn muốn chia sẻ điều gì?</label>
-    <p class="field-hint">Bảng tin hiện khoảng 300 ký tự đầu, nên hãy mở bài bằng điều bạn muốn nói nhất.</p>
-    <textarea name="content" id="id_content" rows="6" required autofocus
+    <p class="field-hint" id="content-hint">Bảng tin hiện khoảng 300 ký tự đầu, nên hãy mở bài bằng điều bạn muốn nói nhất. Nhấn Ctrl+Enter để đăng nhanh.</p>
+    <textarea name="content" id="id_content" rows="6" required autofocus aria-describedby="content-hint content-count{% if form.content.errors %} content-error{% endif %}"{% if form.content.errors %} aria-invalid="true"{% endif %}
               placeholder="Kể lại một khoảnh khắc, một suy nghĩ, một góc nhìn…">{{ form.content.value|default:'' }}</textarea>
-    {% for error in form.content.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    <p class="field-hint char-count" id="content-count"></p>
+    {% if form.content.errors %}<p class="field-error" id="content-error">{{ form.content.errors|join:" " }}</p>{% endif %}
   </div>
 
   <div class="field">
@@ -60,6 +61,23 @@
 </form>
 
 <script>
+  // Đếm ký tự: cho biết bao nhiêu chữ sẽ hiện trên bảng tin (khoảng 300 ký tự đầu)
+  (function () {
+    const area = document.getElementById('id_content');
+    const out = document.getElementById('content-count');
+    function update() {
+      const n = area.value.trim().length;
+      const hasImage = document.getElementById('id_image').files.length || document.getElementById('image-preview').dataset.original;
+      const short = n > 0 && n < 10 && !hasImage;   // cùng ngưỡng với PostForm.MIN_TEXT_ONLY
+      out.classList.toggle('is-warning', short);
+      out.textContent = n === 0 ? '' : short ? 'Cần thêm ' + (10 - n) + ' ký tự nữa, hoặc đăng kèm một ảnh.'
+        : n <= 300 ? n + ' ký tự, cả bài hiện trên bảng tin' : n + ' ký tự, bảng tin hiện 300 ký tự đầu';
+    }
+    area.addEventListener('input', update);
+    document.getElementById('id_image').addEventListener('change', update);
+    update();
+  })();
+
   // Xem trước ảnh trước khi đăng (ảnh chỉ đọc trong trình duyệt, chưa gửi lên server)
   (function () {
     const input = document.getElementById('id_image');

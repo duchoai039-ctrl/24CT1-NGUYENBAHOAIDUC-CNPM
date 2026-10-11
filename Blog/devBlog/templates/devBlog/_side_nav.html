@@ -12,7 +12,7 @@
     <span class="logo-text">Perspect</span>
   </a>
 
-  <div class="side-search">{% include 'devBlog/_search_form.html' %}</div>
+  {% if page != 'explore' %}<div class="side-search">{% include 'devBlog/_search_form.html' %}</div>{% endif %}
 
   <ul class="side-links">
     <li><a href="{% url 'home' %}"{% if page == 'home' and not current_tag and not query %} aria-current="page"{% endif %}>
@@ -20,7 +20,7 @@
     {% chu_de as nav_tags %}
     {% if nav_tags %}
     <li>
-      <details class="side-topics" open>
+      <details class="side-topics"{% if current_tag %} open{% endif %}>
         <summary><i class="fa-solid fa-hashtag" aria-hidden="true"></i> Chủ đề <i class="fa-solid fa-chevron-down side-caret" aria-hidden="true"></i></summary>
         <ul>
           {% for tag in nav_tags %}
@@ -38,7 +38,7 @@
       <i class="fa-solid fa-user" aria-hidden="true"></i> Trang cá nhân</a></li>
   </ul>
 
-  <a href="{% url 'create_post' %}" class="btn btn-block side-write"><i class="fa-solid fa-pen" aria-hidden="true"></i> Viết bài</a>
+  <a href="{% url 'create_post' %}" class="btn btn-block side-write" aria-keyshortcuts="n" title="Phím tắt: N"><i class="fa-solid fa-pen" aria-hidden="true"></i> Viết bài</a>
 
   {# Tài khoản ở cuối menu; menu con mở lên trên #}
   <div class="user-dropdown-wrapper side-user">
@@ -52,6 +52,7 @@
         <strong>{{ user|ten }}</strong>
         <small>{{ user.email }}</small>
       </div>
+      <p class="dropdown-hint">Phím tắt: <kbd>/</kbd> tìm kiếm, <kbd>N</kbd> viết bài, <kbd>Ctrl</kbd>+<kbd>Enter</kbd> gửi</p>
       <hr class="dropdown-divider" />
       <a href="{% url 'complete_profile' %}" class="dropdown-item">
         <i class="fa-solid fa-user-pen" aria-hidden="true"></i> Sửa thông tin
