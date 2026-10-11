@@ -219,7 +219,7 @@ def complete_profile(request):
             if editing:
                 messages.success(request, 'Đã lưu thông tin.')
                 return redirect('profile')
-            messages.success(request, f'Chào {user.first_name}, chúc bạn có những góc nhìn thú vị!')
+            messages.success(request, f'Chào {user.first_name}, chúc bạn có những góc nhìn thú vị.')
             return redirect('home')
     else:
         form = IntroForm(initial={

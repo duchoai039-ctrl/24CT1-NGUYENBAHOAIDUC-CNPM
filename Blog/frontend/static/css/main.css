@@ -30,6 +30,10 @@
   --measure: 42rem;       /* ~68 ký tự/dòng cho thân bài */
   --radius: 6px;
   --radius-panel: 10px;   /* tấm: bài, mục cột phải, thân bài, bình luận */
+  --z-raised: 1;          /* chữ nằm trên lớp phủ ảnh */
+  --z-nav: 1000;          /* thanh điều hướng, tab dưới, nút viết nổi */
+  --z-toast: 1500;
+  --z-skip: 2000;         /* link "Bỏ qua tới nội dung" luôn trên cùng */
 
   color-scheme: dark;
 }
@@ -89,7 +93,7 @@ a:hover { color: var(--gold); }
 }
 
 .skip-link {
-  position: absolute; left: 1rem; top: -3rem; z-index: 2000;
+  position: absolute; left: 1rem; top: -3rem; z-index: var(--z-skip);
   padding: 0.5rem 0.9rem; background: var(--text); color: var(--on-text);
   border-radius: var(--radius); text-decoration: none;
 }
@@ -170,7 +174,7 @@ a:hover { color: var(--gold); }
   body.has-side-nav .toast-container { left: calc(50% + 7.5rem); }   /* giữa phần bên phải thanh trái 15rem */
 }
 .side-nav {
-  position: fixed; top: 0; bottom: 0; left: 0; z-index: 1000;
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: var(--z-nav);
   width: 15rem;
   flex-direction: column;
   gap: 1.1rem;
@@ -213,7 +217,7 @@ a:hover { color: var(--gold); }
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: var(--z-nav);
   display: flex;
   align-items: center;
   gap: 1.25rem;
@@ -301,6 +305,7 @@ a:hover { color: var(--gold); }
   color: var(--muted); text-decoration: none;
 }
 .nav-bell:hover { color: var(--gold); border-color: var(--line-strong); }
+.like-count, .comment-count, .follower-count, .notif-count, .profile-stats dd { font-variant-numeric: tabular-nums; }   /* số đổi không làm chữ bên cạnh nhích */
 .notif-count {
   min-width: 1.25rem; padding: 0 0.35rem;
   border-radius: 999px;
@@ -413,7 +418,8 @@ a:hover { color: var(--gold); }
 .dropdown-item i { width: 1rem; color: var(--muted); }
 .dropdown-item:hover { background: var(--bg); color: var(--text); }
 .logout-item:hover, .logout-item:hover i { color: var(--son); }
-.theme-menu-item { display: none; }   /* chỉ hiện trên điện thoại, xem "Màn hình hẹp" */
+.theme-menu-item { display: none; }
+.theme-moon-icon { display: none; }   /* JS updateThemeIcons bật/tắt theo chế độ */   /* chỉ hiện trên điện thoại, xem "Màn hình hẹp" */
 .theme-label-light, [data-theme="light"] .theme-label-dark { display: none; }
 [data-theme="light"] .theme-label-light { display: inline; }
 
@@ -423,7 +429,7 @@ a:hover { color: var(--gold); }
   bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1500;
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -826,7 +832,7 @@ a:hover { color: var(--gold); }
   min-height: 2.75rem; padding: 0 0.5rem; border: 0; background: none;
   color: var(--muted); font: inherit; cursor: pointer;
 }
-.comment-delete button:hover { color: var(--son); text-decoration: underline; }
+.comment-delete button:hover, .comment-delete button.is-armed { color: var(--son); text-decoration: underline; }
 .comment-body { padding-left: 2.5rem; }
 .comment-body { margin-top: 0.4rem; font-family: var(--font-read); font-size: 1.05rem; line-height: 1.65; }
 .comment-body p + p { margin-top: 0.8em; }
@@ -1057,7 +1063,7 @@ body.landing-page-active .footer { display: none; }
 .landing-panel-right::after {
   background: linear-gradient(to left, rgba(20, 13, 8, 0.78) 0%, rgba(20, 13, 8, 0.45) 55%, rgba(20, 13, 8, 0.2) 100%);
 }
-.landing-content, .scroll-hint { z-index: 1; }   /* nằm trên lớp phủ */
+.landing-content, .scroll-hint { z-index: var(--z-raised); }   /* nằm trên lớp phủ */
 
 .scroll-hint {
   position: absolute; left: 50%; bottom: 1rem; transform: translateX(-50%);
@@ -1145,7 +1151,7 @@ body.landing-page-active .footer { display: none; }
   body.has-side-nav .navbar .user-dropdown-menu { left: 0; right: auto; }
   body.has-side-nav .logo-text { display: inline; }
   .bottom-nav {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-nav);
     display: flex;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     background: var(--bg);
@@ -1161,7 +1167,7 @@ body.landing-page-active .footer { display: none; }
   .bottom-nav a[aria-current="page"] { color: var(--gold); }
   .bottom-nav .notif-count { position: absolute; top: 0.25rem; left: 50%; margin-left: 0.3rem; }
   .fab-write {
-    position: fixed; right: 1rem; z-index: 1000;
+    position: fixed; right: 1rem; z-index: var(--z-nav);
     bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
     display: grid; place-items: center;
     width: 3.5rem; height: 3.5rem; border-radius: 50%;
