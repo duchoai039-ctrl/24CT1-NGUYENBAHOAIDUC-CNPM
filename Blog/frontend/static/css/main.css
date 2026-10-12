@@ -983,7 +983,7 @@ input:focus-visible, textarea:focus-visible { outline-offset: 0; border-color: v
   line-height: 1.45;
 }
 .profile-quote blockquote::before {   /* dấu ngoặc kép lớn dát vàng thay vạch trái + chữ nghiêng */
-  content: 'C'; display: block; height: 1.9rem;
+  content: '\201C'; display: block; height: 1.9rem;
   color: var(--gold); font-size: 3.75rem; line-height: 1;
 }
 .profile-quote blockquote a { text-decoration: none; }
