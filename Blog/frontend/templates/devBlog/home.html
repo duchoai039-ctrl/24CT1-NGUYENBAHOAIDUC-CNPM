@@ -72,6 +72,46 @@
     {% endif %}
   </section>
 
+  {% comment %} Kéo gần cuối thì tự tải trang sau và nối bài vào; không có JS thì vẫn còn nút chuyển trang.
+     shortcut: bấm Back từ một bài sẽ về lại trang 1, chưa giữ các bài đã nối; cần thì lưu vị trí vào sessionStorage {% endcomment %}
+  <script>
+    (function() {
+      const feed = document.querySelector('.feed');
+      let pager = feed.querySelector('.pagination');
+      if (!pager || !('IntersectionObserver' in window)) return;
+      let loading = false;
+      pager.style.visibility = 'hidden';   // vẫn chiếm chỗ để làm mốc cuộn, không hiện "Trang 2 / 5" giữa danh sách liền mạch
+      const observer = new IntersectionObserver(async entries => {
+        const next = pager && [...pager.querySelectorAll('a')].find(a => a.textContent.trim() === 'Trang sau');
+        if (!entries[0].isIntersecting || loading || !next) return;
+        loading = true;
+        try {
+          const res = await fetch(next.href);
+          if (!res.ok) throw new Error(res.status);
+          const page = new DOMParser().parseFromString(await res.text(), 'text/html');
+          page.querySelectorAll('.feed > .post-item').forEach(post => pager.before(post));
+          const newPager = page.querySelector('.feed .pagination');
+          if (newPager && newPager.querySelector('a:last-child')) {
+            newPager.style.visibility = 'hidden';
+            pager.replaceWith(newPager);
+            pager = newPager;
+            observer.disconnect();
+            observer.observe(pager);
+          } else {
+            pager.remove();   // hết bài
+            pager = null;
+            observer.disconnect();
+          }
+        } catch (err) {
+          pager.style.visibility = '';   // mất mạng: hiện lại nút "Trang sau" cho bấm tay
+          observer.disconnect();
+        }
+        loading = false;
+      }, { rootMargin: '600px' });
+      observer.observe(pager);
+    })();
+  </script>
+
   <aside class="feed-aside">
     {% include 'devBlog/_sidebar.html' %}
   </aside>
