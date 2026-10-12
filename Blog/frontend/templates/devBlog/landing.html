@@ -11,8 +11,8 @@
   <section class="landing-panel" id="dau-trang">
     <img class="landing-bg" src="{% static 'img/landing/landing-1.jpg' %}" alt="" fetchpriority="high">
     <div class="landing-content">
-      <h1 class="landing-title">Chào mừng bạn đến với Perspect.</h1>
-      <p class="landing-subtitle">Nơi mỗi người kể lại cuộc sống từ góc nhìn của mình.</p>
+      <h1 class="landing-title">Hôm nay bạn thấy gì?</h1>
+      <p class="landing-subtitle">Một quán quen, một cơn mưa, một chuyện nhỏ trên đường về. Kể lại trên Perspect.</p>
       <div class="landing-actions">
         <a href="{% url 'register' %}" class="btn btn-large">Bắt đầu chia sẻ</a>
         <p class="landing-login-hint">Đã có tài khoản? <a href="{% url 'login' %}">Đăng nhập</a></p>
@@ -27,13 +27,17 @@
       <h2 class="landing-title">Kể điều bạn thấy.</h2>
       <p class="landing-subtitle">Một bài viết, một tấm ảnh, chỉ cần một góc nhìn của riêng bạn.</p>
     </div>
+    <a href="#nhin-doi" class="scroll-hint">Kéo xuống <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></a>
   </section>
 
-  <section class="landing-panel">
+  <section class="landing-panel" id="nhin-doi">
     <img class="landing-bg" src="{% static 'img/landing/landing-3.jpg' %}" alt="" loading="lazy" decoding="async">
     <div class="landing-content">
       <h2 class="landing-title">Nhìn đời qua mắt người khác.</h2>
       <p class="landing-subtitle">Theo dõi những người bạn thích, thả tim, bình luận.</p>
+      <div class="landing-actions">
+        <a href="{% url 'register' %}" class="btn btn-large">Bắt đầu chia sẻ</a>
+      </div>
     </div>
     <a href="#dau-trang" class="scroll-hint">Lên đầu trang <i class="fa-solid fa-chevron-up" aria-hidden="true"></i></a>
   </section>

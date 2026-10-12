@@ -1266,9 +1266,10 @@ body.landing-page-active .container { max-width: none; padding: 0; }
     animation-timeline: view();
     animation-range: entry 0% cover 50%;
   }
+  .landing-panel:not(:first-child) { view-timeline-name: --panel; }
   .landing-panel:not(:first-child) .landing-content {   /* màn 2, 3: chữ hiện dần, trồi lên */
     animation: rise-in linear both;
-    animation-timeline: view();
+    animation-timeline: --panel;   /* tính theo cả màn, không theo khối chữ: trên điện thoại chữ nằm sát đáy nên view() chưa kịp hiện đủ */
     animation-range: entry 20% cover 45%;
   }
 }
