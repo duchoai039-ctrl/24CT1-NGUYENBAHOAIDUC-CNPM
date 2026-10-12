@@ -13,6 +13,8 @@
   <div class="navbar-center">{% include 'devBlog/_search_form.html' %}</div>
   {% endif %}
 
+  {# Đăng nhập / đăng ký: chỉ logo. Link qua lại nằm cuối form, sáng/tối theo máy. #}
+  {% if user.is_authenticated %}
   <div class="navbar-right">
     <!-- Theme Toggle Button -->
     <button type="button" class="theme-toggle-btn" onclick="toggleTheme()" title="Chuyển chế độ sáng / tối" aria-label="Chuyển chế độ sáng / tối">
@@ -20,7 +22,6 @@
       <i class="fa-regular fa-moon theme-moon-icon" aria-hidden="true"></i>
     </button>
 
-    {% if user.is_authenticated %}
       {% so_thong_bao user as unread %}
       <a href="{% url 'notifications' %}" class="nav-bell">
         <span class="visually-hidden">Thông báo</span>
@@ -61,11 +62,6 @@
           </form>
         </div>
       </div>
-    {% else %}
-      <nav class="nav-links">
-        <a href="{% url 'login' %}" class="nav-login-link">Đăng nhập</a>
-        <a href="{% url 'register' %}" class="btn btn-small nav-register">Đăng ký</a>
-      </nav>
-    {% endif %}
   </div>
+  {% endif %}
 </header>
