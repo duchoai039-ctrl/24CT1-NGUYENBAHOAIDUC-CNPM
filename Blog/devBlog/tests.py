@@ -340,3 +340,23 @@ class NotFoundAndMetaTests(TestCase):
         response = self.client.get('/')
         self.assertContains(response, 'property="og:image"')
         self.assertContains(response, 'name="description"')
+
+
+class SeedDemoTests(TestCase):
+    """Lệnh seed_demo tạo dữ liệu mẫu, không tạo trùng, và --xoa xóa sạch mà không đụng tài khoản thật."""
+
+    def test_tao_roi_xoa(self):
+        from io import StringIO
+        from django.core.management import call_command
+        real = User.objects.create_user('that', first_name='Thật', last_name='Người')
+        call_command('seed_demo', stdout=StringIO())
+        demo = User.objects.filter(email__endswith='@demo.perspect.vn')
+        self.assertEqual(demo.count(), 20)
+        self.assertTrue(all(u.first_name and u.last_name for u in demo.all()))   # không bị kẹt ở bước giới thiệu
+        self.assertGreater(Comment.objects.count(), 0)
+        call_command('seed_demo', stdout=StringIO())
+        self.assertEqual(demo.count(), 20)
+        call_command('seed_demo', '--xoa', stdout=StringIO())
+        self.assertFalse(demo.exists())
+        self.assertFalse(Post.objects.exists())
+        self.assertTrue(User.objects.filter(pk=real.pk).exists())
