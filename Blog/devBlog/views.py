@@ -21,6 +21,88 @@ QUOTE_MIN_CHARS = 20
 QUOTE_MAX_CHARS = 120
 
 
+# ─── AUTH ────────────────────────────────────────────────────────────────────
+
+def register(request):
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Đăng nhập luôn rồi sang bước giới thiệu (Họ + Tên), không bắt nhập lại
+            login(request, user, backend='devBlog.backends.EmailOrPhoneBackend')
+            return redirect('complete_profile')
+    else:
+        form = RegisterForm()
+
+    return render(request, 'devBlog/register.html', {'form': form})
+
+
+@login_required
+def complete_profile(request):
+    """ "Mọi người có thể biết đến bạn thông qua": Họ + Tên (bắt buộc) và chủ đề quan tâm."""
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    editing = bool(request.user.first_name)   # đã có tên -> đang sửa thông tin, không phải bước chào mừng
+    if request.method == 'POST':
+        form = IntroForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            user.last_name = form.cleaned_data['last_name']
+            user.first_name = form.cleaned_data['first_name']
+            user.save(update_fields=['last_name', 'first_name'])
+            profile.interests.set(form.cleaned_data['interests'])
+            if editing:
+                messages.success(request, 'Đã lưu thông tin.')
+                return redirect('profile')
+            messages.success(request, f'Chào {user.first_name}, chúc bạn có những góc nhìn thú vị.')
+            return redirect('home')
+    else:
+        form = IntroForm(initial={
+            'last_name': request.user.last_name,
+            'first_name': request.user.first_name,
+            'interests': profile.interests.all(),
+        })
+
+    return render(request, 'devBlog/welcome.html', {'form': form, 'tags': Tag.objects.all(), 'editing': editing})
+
+
+def login_view(request):
+    if request.method == 'POST':
+        ident = request.POST.get('ident', '').strip()
+        user = authenticate(request, username=ident, password=request.POST.get('password'))
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+
+        return render(request, 'devBlog/login.html', {
+            'error': 'Sai Gmail / số điện thoại hoặc mật khẩu.',
+            'ident': ident,
+        })
+
+    return render(request, 'devBlog/login.html')
+
+
+def csrf_failure(request, reason=''):
+    # Trang đang mở còn mã CSRF cũ (đăng nhập lại ở tab khác, bấm Back sau khi đăng nhập).
+    # Đăng xuất thì vẫn cho thoát (cùng lắm web lạ làm mình bị đăng xuất, vô hại);
+    # form khác vẫn bị chặn như cũ, chỉ báo bằng lời dễ hiểu thay trang 403.
+    if request.path == reverse('logout'):
+        logout(request)
+        return redirect('login')
+    messages.error(request, 'Trang đã cũ, bạn tải lại rồi thử lần nữa nhé.')
+    back = request.META.get('HTTP_REFERER')
+    if back and url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(back)
+    return redirect('home')
+
+
+@require_POST
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+
+# ─── FEED HELPERS ────────────────────────────────────────────────────────────
+
 def posts_with_stats(posts, user):
     # Lấy sẵn tác giả, thẻ, số thích, số bình luận và "mình đã thích chưa"
     # trong vài truy vấn cố định, thay vì template hỏi DB riêng cho từng bài.
@@ -104,6 +186,8 @@ def featured_quote(posts):
     return None
 
 
+# ─── TRANG CHỦ ───────────────────────────────────────────────────────────────
+
 def home(request):
     # Chưa đăng nhập thì luôn thấy trang landing (bài viết chỉ dành cho thành viên)
     if not request.user.is_authenticated:
@@ -131,6 +215,8 @@ def home(request):
 
     return render_feed(request, posts, {'query': query, 'current_tag': current_tag})
 
+
+# ─── BÀI VIẾT ────────────────────────────────────────────────────────────────
 
 @login_required
 def post_detail(request, post_id):
@@ -189,82 +275,6 @@ def like_post(request, post_id):
         return redirect(next_url)
     return redirect('post_detail', post_id=post.id)
 
-def register(request):
-    if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            # Đăng nhập luôn rồi sang bước giới thiệu (Họ + Tên), không bắt nhập lại
-            login(request, user, backend='devBlog.backends.EmailOrPhoneBackend')
-            return redirect('complete_profile')
-    else:
-        form = RegisterForm()
-
-    return render(request, 'devBlog/register.html', {'form': form})
-
-
-@login_required
-def complete_profile(request):
-    """ "Mọi người có thể biết đến bạn thông qua": Họ + Tên (bắt buộc) và chủ đề quan tâm."""
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
-    editing = bool(request.user.first_name)   # đã có tên -> đang sửa thông tin, không phải bước chào mừng
-    if request.method == 'POST':
-        form = IntroForm(request.POST)
-        if form.is_valid():
-            user = request.user
-            user.last_name = form.cleaned_data['last_name']
-            user.first_name = form.cleaned_data['first_name']
-            user.save(update_fields=['last_name', 'first_name'])
-            profile.interests.set(form.cleaned_data['interests'])
-            if editing:
-                messages.success(request, 'Đã lưu thông tin.')
-                return redirect('profile')
-            messages.success(request, f'Chào {user.first_name}, chúc bạn có những góc nhìn thú vị.')
-            return redirect('home')
-    else:
-        form = IntroForm(initial={
-            'last_name': request.user.last_name,
-            'first_name': request.user.first_name,
-            'interests': profile.interests.all(),
-        })
-
-    return render(request, 'devBlog/welcome.html', {'form': form, 'tags': Tag.objects.all(), 'editing': editing})
-
-
-def login_view(request):
-    if request.method == 'POST':
-        ident = request.POST.get('ident', '').strip()
-        user = authenticate(request, username=ident, password=request.POST.get('password'))
-        if user is not None:
-            login(request, user)
-            return redirect('home')
-
-        return render(request, 'devBlog/login.html', {
-            'error': 'Sai Gmail / số điện thoại hoặc mật khẩu.',
-            'ident': ident,
-        })
-
-    return render(request, 'devBlog/login.html')
-
-
-def csrf_failure(request, reason=''):
-    # Trang đang mở còn mã CSRF cũ (đăng nhập lại ở tab khác, bấm Back sau khi đăng nhập).
-    # Đăng xuất thì vẫn cho thoát (cùng lắm web lạ làm mình bị đăng xuất, vô hại);
-    # form khác vẫn bị chặn như cũ, chỉ báo bằng lời dễ hiểu thay trang 403.
-    if request.path == reverse('logout'):
-        logout(request)
-        return redirect('login')
-    messages.error(request, 'Trang đã cũ, bạn tải lại rồi thử lần nữa nhé.')
-    back = request.META.get('HTTP_REFERER')
-    if back and url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
-        return redirect(back)
-    return redirect('home')
-
-
-@require_POST
-def logout_view(request):
-    logout(request)
-    return redirect('login')
 
 @login_required
 def create_post(request):
@@ -290,6 +300,7 @@ def create_post(request):
     return render(request, 'devBlog/create_post.html', {
         'form': form
     })
+
 
 @login_required
 def edit_post(request, post_id):
@@ -339,6 +350,7 @@ def delete_post(request, post_id):
         'post': post
     })
 
+
 @login_required
 @require_POST
 def delete_comment(request, comment_id):
@@ -347,6 +359,9 @@ def delete_comment(request, comment_id):
         comment.delete()
         messages.success(request, 'Đã xóa bình luận.')
     return redirect(reverse('post_detail', args=[comment.post_id]) + '#binh-luan')
+
+
+# ─── HỒ SƠ ───────────────────────────────────────────────────────────────────
 
 @login_required
 def profile(request):
@@ -419,6 +434,14 @@ def toggle_follow(request, user_id):
     return redirect('user_profile', user_id=user_id)
 
 
+# ─── KHÁM PHÁ ────────────────────────────────────────────────────────────────
+
+@login_required
+def explore(request):
+    # Mục "Tìm kiếm" ở thanh dưới trên điện thoại: ô tìm + danh sách chủ đề
+    return render(request, 'devBlog/explore.html')
+
+
 @login_required
 def posts_by_tag(request, tag_id):
     tag = get_object_or_404(Tag, id=tag_id)
@@ -426,6 +449,8 @@ def posts_by_tag(request, tag_id):
 
     return render_feed(request, posts, {'current_tag': tag})
 
+
+# ─── THÔNG BÁO ───────────────────────────────────────────────────────────────
 
 @login_required
 def notifications(request):
@@ -438,9 +463,3 @@ def notifications(request):
 @login_required
 def notification_count(request):
     return JsonResponse({'unread': request.user.notifications.filter(read=False).count()})
-
-
-@login_required
-def explore(request):
-    # Mục "Tìm kiếm" ở thanh dưới trên điện thoại: ô tìm + danh sách chủ đề
-    return render(request, 'devBlog/explore.html')

@@ -2,6 +2,8 @@ venv/
 __pycache__/
 *.pyc
 *.sqlite3
+# CSDL SQLite trên máy, tên không có đuôi nên phải ghi riêng
+Blog/Perspect
 
 # Ảnh người dùng upload (dữ liệu, không phải code)
 Blog/media/
@@ -15,3 +17,9 @@ du_lieu*.json
 # Công cụ AI cục bộ, không đưa lên git
 .claude/
 .impeccable/
+
+# File làm việc riêng trên máy, không đưa lên git
+CLAUDE.md
+PLAN.md
+# File tạm draw.io tự tạo
+*.bkp

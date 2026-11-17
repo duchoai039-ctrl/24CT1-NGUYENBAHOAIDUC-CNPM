@@ -132,7 +132,7 @@ WSGI_APPLICATION = 'Blog.wsgi.application'
 # Có DATABASE_URL (chuỗi kết nối PostgreSQL của Neon) thì dùng nó, không có thì dùng SQLite trên máy
 DATABASES = {
     'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        default=f'sqlite:///{BASE_DIR / "Perspect"}',
         conn_max_age=600,          # giữ kết nối lại 10 phút, đỡ phải nối lại Neon mỗi lần
         conn_health_checks=True,   # Neon tự ngủ khi rảnh: kiểm tra kết nối còn sống trước khi dùng
     )
